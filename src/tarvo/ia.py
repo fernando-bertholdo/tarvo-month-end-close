@@ -195,7 +195,14 @@ def call_claude_code(ln: dict, plano: dict[str, str]):
         return out["structured_output"]
     text = out.get("result") if isinstance(out, dict) else None
     if isinstance(text, str):
-        text = text.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
+        text = text.strip()  # no str.removeprefix: keeps Python 3.8 compatibility
+        if text.startswith("```json"):
+            text = text[7:]
+        if text.startswith("```"):
+            text = text[3:]
+        if text.endswith("```"):
+            text = text[:-3]
+        text = text.strip()
         return json.loads(text)
     return None
 

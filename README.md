@@ -20,7 +20,7 @@ Fecha o mês da Tarvo Pagamentos a partir dos arquivos como eles chegam (Orbe, p
 
 ## Como rodar
 
-Pré-requisito: Python 3.10 ou mais novo. Nada a instalar: só biblioteca padrão. Tudo a partir da raiz do repositório.
+Pré-requisito: Python 3.8 ou mais novo (testado em 3.8 e 3.14). Nada a instalar: só biblioteca padrão. Tudo a partir da raiz do repositório.
 
 **1. O comando (caminho da banca).**
 
