@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fechamento Tarvo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap">
+<style>
+:root {
+  --fundo: #F9F5FA; --tinta: #1B121D; --texto-2: #635665;
+  --acento: #AB1D72; --acento-suave: #FFE4F0; --sobre-acento: #FFFFFF;
+  --bom: #206B38; --alerta: #805C09; --critico: #A83538;
+  --borda: #E3DEE4; --cartao: #FFFFFF;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fundo: #1A121B; --tinta: #F1EDF2; --texto-2: #B2A6B5;
+    --acento: #EB77B6; --acento-suave: #471D33; --sobre-acento: #1A121B;
+    --bom: #75C77F; --alerta: #C9A15B; --critico: #FE6D5F;
+    --borda: #302830; --cartao: #221823;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--fundo); color: var(--tinta); font-size: 15px; line-height: 1.45; }
+.num { font-variant-numeric: tabular-nums; }
+header { padding: 20px 24px 12px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+  justify-content: space-between; border-bottom: 1px solid var(--borda); }
+h1 { font-size: 22px; margin: 0; font-weight: 700; letter-spacing: -0.3px; }
+.sub { color: var(--texto-2); font-size: 13px; margin-top: 2px; }
+.selo-ficticio { font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px;
+  background: var(--acento-suave); color: var(--acento); }
+.controles { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+button { font: inherit; font-size: 13px; font-weight: 600; padding: 7px 14px; border-radius: 8px;
+  border: 1px solid var(--borda); background: var(--cartao); color: var(--tinta); cursor: pointer; }
+button:hover { border-color: var(--acento); }
+button.primario { background: var(--acento); color: var(--sobre-acento); border-color: var(--acento); }
+button[aria-pressed="true"] { background: var(--acento-suave); color: var(--acento); border-color: var(--acento); }
+button:disabled { opacity: .5; cursor: default; }
+main { padding: 16px 24px 80px; max-width: 1200px; margin: 0 auto; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+.kpi { background: var(--cartao); border: 1px solid var(--borda); border-radius: 12px; padding: 14px 16px; }
+.kpi .rot { font-size: 12px; font-weight: 600; color: var(--texto-2); text-transform: uppercase;
+  letter-spacing: .6px; }
+.kpi .val { font-size: 24px; font-weight: 700; margin-top: 4px; }
+.kpi .det { font-size: 12px; color: var(--texto-2); margin-top: 2px; }
+.kpi.critico .val { color: var(--critico); }
+.estado { font-size: 13px; color: var(--texto-2); margin: 14px 0 6px; min-height: 20px; }
+.filtros { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0; }
+.filtros button { padding: 5px 12px; border-radius: 999px; }
+.rotina { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.rotina .ctr { background: var(--cartao); border: 1px solid var(--borda); border-radius: 10px;
+  padding: 8px 12px; font-size: 13px; }
+.rotina .ctr b { font-size: 17px; margin-right: 4px; }
+.lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+.cartao { background: var(--cartao); border: 1px solid var(--borda); border-left: 4px solid var(--alerta);
+  border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
+.cartao.excecao { border-left-color: var(--critico); }
+.cartao.foco { outline: 2px solid var(--acento); outline-offset: 2px; }
+.cartao .topo { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font-size: 12px; }
+.tag { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px;
+  border: 1px solid var(--borda); color: var(--texto-2); }
+.tag.humano { background: var(--critico); color: var(--sobre-acento); border-color: var(--critico); }
+.tag.area { color: var(--critico); border-color: var(--critico); }
+.tag.ia { color: var(--acento); border-color: var(--acento); }
+.cartao .res { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.cartao .res .r { font-weight: 600; }
+.cartao .res .v { font-weight: 700; font-size: 17px; }
+.cartao .mot { font-size: 14px; }
+.cartao .fonte { font-size: 12px; color: var(--texto-2); word-break: break-all; }
+.cartao .meta { font-size: 12px; color: var(--texto-2); }
+.vazio { color: var(--texto-2); font-size: 14px; padding: 20px 0; }
+.arquivos { font-size: 12px; color: var(--texto-2); margin: 6px 0 0; }
+.legenda { position: fixed; left: 0; right: 0; bottom: 0; padding: 8px 24px; font-size: 12px;
+  background: var(--fundo); border-top: 1px solid var(--borda); color: var(--texto-2);
+  display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.hidden { display: none !important; }
+@media (prefers-reduced-motion: no-preference) {
+  .cartao.novo { animation: entra .35s ease-out; }
+  @keyframes entra { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Fechamento mensal</h1>
+    <div class="sub" id="sub">Tarvo · decisões do motor</div>
+  </div>
+  <div class="controles">
+    <span class="selo-ficticio">Dados fictícios do case</span>
+    <span id="ctl-reproducao">
+      <button id="b-tocar" class="primario" type="button">Tocar</button>
+      <button id="b-vel" type="button" aria-pressed="false">1x</button>
+      <button id="b-pular" type="button">Pular para exceções</button>
+      <button id="b-tudo" type="button">Tudo</button>
+    </span>
+    <span id="ctl-vivo" class="hidden">
+      <button id="b-rodar" class="primario" type="button">Rodar fechamento</button>
+    </span>
+  </div>
+</header>
+<main>
+  <section class="kpis" id="kpis" aria-label="Indicadores"></section>
+  <div class="estado" id="estado" role="status" aria-live="polite"></div>
+  <div class="filtros" id="filtros" role="group" aria-label="Filtro por frente"></div>
+  <div class="rotina" id="rotina" aria-label="Rotina por frente"></div>
+  <section class="lista" id="lista" aria-label="Decisões"></section>
+  <div class="vazio hidden" id="vazio">Nenhuma decisão de atenção ou exceção nesta frente.</div>
+  <div class="arquivos" id="arquivos"></div>
+</main>
+<div class="legenda">
+  <span>Ritmo de apresentação. O motor decidiu por regra e anotou cada decisão; a tela só mostra o que ele anotou.</span>
+  <span class="selo-ficticio">Dados fictícios do case</span>
+</div>
+<script type="application/json" id="eventos">__EVENTOS_JSON__</script>
+<script>
+(function () {
+  "use strict";
+  var FRENTES = ["CHECKOUT", "REMESSA", "NOTAS", "EXTRATOS", "PENDENCIAS"];
+  var ROTULO_FRENTE = { CHECKOUT: "Checkout", REMESSA: "Remessa", NOTAS: "Notas",
+    EXTRATOS: "Extratos", PENDENCIAS: "Pendências" };
+  var AREAS = ["Financeiro", "Comercial", "Tesouraria"];
+  // Base delays (ms) per weight at 1x; exceptions play in slow motion.
+  var DELAY = { rotina: 12, atencao: 450, excecao: 1800, outro: 150 };
+  var ROTINA_POR_PASSO = 20;
+  var CARD_LIMIT = 400;
+
+  var brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+  var pct = new Intl.NumberFormat("pt-BR", { style: "percent", maximumFractionDigits: 0 });
+  function fmtBRL(v) { return (v === null || v === undefined || isNaN(v)) ? "—" : brl.format(v); }
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined && text !== null) n.textContent = String(text);
+    return n;
+  }
+  function $(id) { return document.getElementById(id); }
+
+  var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var params = new URLSearchParams(location.search);
+  var aoVivo = params.get("ao_vivo") === "1";
+
+  var embutidos = [];
+  try { embutidos = JSON.parse($("eventos").textContent || "[]"); } catch (e) { embutidos = []; }
+  if (!Array.isArray(embutidos)) embutidos = [];
+  embutidos.sort(function (a, b) { return (a.seq || 0) - (b.seq || 0); });
+
+  var st;
+  var filtro = "";
+  function novoEstado() {
+    st = { n: 0, resumo: null, totais: {}, comCheckout: 0, comRemessa: 0, div: 0, notas: 0,
+      pend: 0, porArea: {}, rotina: {}, cartoes: 0, arquivos: [], fim: false, inicio: null };
+    FRENTES.forEach(function (f) { st.rotina[f] = { n: 0, v: 0 }; });
+    $("lista").textContent = "";
+    $("arquivos").textContent = "";
+  }
+
+  function num(v) { return typeof v === "number" && isFinite(v) ? v : 0; }
+
+  // Fold one event into the running state; returns the card node if one was created.
+  function aplicar(ev, animar) {
+    st.n++;
+    var t = ev.tipo;
+    if (t === "inicio") { st.inicio = ev; return null; }
+    if (t === "arquivo") {
+      var f = ev.fonte || {};
+      st.arquivos.push((f.arquivo || "?") + (ev.linhas != null ? " (" + ev.linhas + " linhas)" : ""));
+      return null;
+    }
+    if (t === "total") { if (ev.frente) st.totais[ev.frente] = num(ev.valor); return null; }
+    if (t === "fim") { st.fim = true; if (ev.resumo) st.resumo = ev.resumo; return null; }
+    if (t === "aviso") { return criarCartao(ev, animar); }
+    if (t !== "decisao") return null;
+    var res = String(ev.resultado || "").toLowerCase();
+    var v = num(ev.valor);
+    if (ev.frente === "CHECKOUT" && res.indexOf("comiss") === 0) st.comCheckout += v;
+    if (ev.frente === "REMESSA" && res.indexOf("comiss") === 0) st.comRemessa += v;
+    if (res.indexOf("diverg") === 0) st.div += Math.abs(v);
+    if (ev.frente === "NOTAS") st.notas += v;
+    if (ev.metodo === "HUMANO" || res.indexOf("pend") === 0) {
+      st.pend++;
+      var a = ev.quem_decide || "Sem área";
+      st.porArea[a] = (st.porArea[a] || 0) + 1;
+    }
+    if (ev.peso === "rotina") {
+      var fr = st.rotina[ev.frente] || (st.rotina[ev.frente] = { n: 0, v: 0 });
+      fr.n++; fr.v += v;
+      return null;
+    }
+    return criarCartao(ev, animar);
+  }
+
+  function criarCartao(ev, animar) {
+    st.cartoes++;
+    var c = el("article", "cartao " + (ev.peso === "excecao" ? "excecao" : "atencao") + (animar ? " novo" : ""));
+    c.dataset.frente = ev.frente || "";
+    if (filtro && c.dataset.frente !== filtro) c.classList.add("hidden");
+    var topo = el("div", "topo");
+    topo.appendChild(el("span", "tag", ROTULO_FRENTE[ev.frente] || (ev.tipo === "aviso" ? "Aviso" : "—")));
+    topo.appendChild(el("span", "tag", ev.peso === "excecao" ? "Exceção" : "Atenção"));
+    if (ev.metodo === "HUMANO") {
+      topo.appendChild(el("span", "tag humano", "Decisão humana"));
+      if (ev.quem_decide) topo.appendChild(el("span", "tag area", ev.quem_decide));
+    } else if (ev.metodo === "IA") {
+      topo.appendChild(el("span", "tag ia", "IA"));
+    } else if (ev.metodo) {
+      topo.appendChild(el("span", "tag", "Regra"));
+    }
+    c.appendChild(topo);
+    if (ev.tipo === "decisao") {
+      var r = el("div", "res");
+      r.appendChild(el("span", "r", ev.resultado || "—"));
+      r.appendChild(el("span", "v num", fmtBRL(ev.valor)));
+      c.appendChild(r);
+    }
+    if (ev.motivo) c.appendChild(el("div", "mot", ev.motivo));
+    var f = ev.fonte || {};
+    if (f.arquivo) c.appendChild(el("div", "fonte", f.arquivo + (f.ref ? " · " + f.ref : "")));
+    var meta = [];
+    if (ev.regra) meta.push("Regra " + ev.regra);
+    if (ev.metodo === "IA") {
+      if (typeof ev.confianca === "number") meta.push("confiança " + pct.format(ev.confianca));
+      if (ev.modelo) meta.push(ev.modelo);
+      if (ev.porta) meta.push("porta " + ev.porta);
+    }
+    if (ev.id_saida) meta.push(ev.id_saida);
+    if (meta.length) c.appendChild(el("div", "meta", meta.join(" · ")));
+    var lista = $("lista");
+    lista.appendChild(c);
+    // Keep the DOM bounded on huge logs; counters still hold the full totals.
+    while (lista.childElementCount > CARD_LIMIT) lista.removeChild(lista.firstElementChild);
+    return c;
+  }
+
+  function kpi(rot, val, det, cls) {
+    var k = el("div", "kpi" + (cls ? " " + cls : ""));
+    k.appendChild(el("div", "rot", rot));
+    k.appendChild(el("div", "val num", val));
+    if (det) k.appendChild(el("div", "det", det));
+    return k;
+  }
+
+  function desenharKpis() {
+    var r = st.resumo;
+    var cc = r ? num(r.comissao_checkout) : ("CHECKOUT" in st.totais ? st.totais.CHECKOUT : st.comCheckout);
+    var cr = r ? num(r.comissao_remessa) : ("REMESSA" in st.totais ? st.totais.REMESSA : st.comRemessa);
+    var dv = r ? num(r.divergencias_brl) : st.div;
+    var nt = r ? num(r.notas_brl) : ("NOTAS" in st.totais ? st.totais.NOTAS : st.notas);
+    var pn = r ? num(r.pendencias) : st.pend;
+    var areas = AREAS.map(function (a) { return a + " " + (st.porArea[a] || 0); });
+    Object.keys(st.porArea).forEach(function (a) {
+      if (AREAS.indexOf(a) < 0) areas.push(a + " " + st.porArea[a]);
+    });
+    var origem = r ? "total do mês" : "parcial";
+    var box = $("kpis");
+    box.textContent = "";
+    box.appendChild(kpi("Comissão checkout", fmtBRL(cc), origem));
+    box.appendChild(kpi("Comissão remessa", fmtBRL(cr), origem));
+    box.appendChild(kpi("Divergências", fmtBRL(dv), origem, dv > 0 ? "critico" : ""));
+    box.appendChild(kpi("Notas", fmtBRL(nt), origem));
+    box.appendChild(kpi("Pendências", String(pn), areas.join(" · "), pn > 0 ? "critico" : ""));
+  }
+
+  function desenharRotina() {
+    var box = $("rotina");
+    box.textContent = "";
+    FRENTES.forEach(function (f) {
+      var r = st.rotina[f];
+      if (!r || !r.n) return;
+      if (filtro && filtro !== f) return;
+      var c = el("div", "ctr");
+      c.appendChild(el("b", "num", r.n.toLocaleString("pt-BR")));
+      c.appendChild(document.createTextNode("rotina " + ROTULO_FRENTE[f] + " · "));
+      c.appendChild(el("span", "num", fmtBRL(r.v)));
+      box.appendChild(c);
+    });
+  }
+
+  function desenharResto() {
+    desenharKpis();
+    desenharRotina();
+    var visiveis = 0;
+    var cs = $("lista").children;
+    for (var i = 0; i < cs.length; i++) if (!cs[i].classList.contains("hidden")) visiveis++;
+    $("vazio").classList.toggle("hidden", visiveis > 0 || st.n === 0);
+    $("arquivos").textContent = st.arquivos.length ? "Arquivos lidos: " + st.arquivos.join(" · ") : "";
+    if (st.resumo && st.resumo.duracao_s != null) {
+      $("sub").textContent = "Tarvo · " + (st.resumo.lancamentos || 0) + " lançamentos · motor em " +
+        String(st.resumo.duracao_s).replace(".", ",") + " s";
+    }
+  }
+
+  function desenharFiltros() {
+    var box = $("filtros");
+    box.textContent = "";
+    [""].concat(FRENTES).forEach(function (f) {
+      var b = el("button", "", f ? ROTULO_FRENTE[f] : "Todas");
+      b.type = "button";
+      b.setAttribute("aria-pressed", String(filtro === f));
+      b.addEventListener("click", function () { filtro = f; aplicarFiltro(); desenharFiltros(); });
+      box.appendChild(b);
+    });
+  }
+  function aplicarFiltro() {
+    var cs = $("lista").children;
+    for (var i = 0; i < cs.length; i++) cs[i].classList.toggle("hidden", !!filtro && cs[i].dataset.frente !== filtro);
+    desenharResto();
+  }
+
+  function estado(txt) { $("estado").textContent = txt; }
+
+  // ---- A0: static ----
+  function mostrarTudo() {
+    parar();
+    novoEstado();
+    var frag = document.createDocumentFragment();
+    var lista = $("lista");
+    for (var i = 0; i < embutidos.length; i++) {
+      var c = aplicar(embutidos[i], false);
+      if (c) frag.appendChild(c);
+    }
+    lista.appendChild(frag);
+    while (lista.childElementCount > CARD_LIMIT) lista.removeChild(lista.firstElementChild);
+    pos = embutidos.length;
+    desenharResto();
+    estado(embutidos.length ? embutidos.length + " eventos" : "Sem eventos embutidos");
+    $("b-tocar").textContent = "Tocar";
+  }
+
+  // ---- A1: animated replay ----
+  var pos = 0, timer = null, tocando = false, vel = 1, pularAte = -1;
+  function parar() { tocando = false; if (timer) { clearTimeout(timer); timer = null; } $("b-tocar").textContent = "Tocar"; }
+  function passo() {
+    timer = null;
+    if (!tocando) return;
+    if (pos >= embutidos.length) { parar(); estado("Fim da reprodução · " + st.n + " eventos"); return; }
+    var ev = embutidos[pos];
+    var espera;
+    if (pularAte > pos) {
+      // Fast-forward to the next exception without drawing intermediate frames.
+      while (pos < pularAte) { aplicar(embutidos[pos], false); pos++; }
+      pularAte = -1;
+      desenharResto();
+      espera = 0;
+    } else if (ev.tipo === "decisao" && ev.peso === "rotina") {
+      var k = 0;
+      while (pos < embutidos.length && k < ROTINA_POR_PASSO) {
+        var e2 = embutidos[pos];
+        if (!(e2.tipo === "decisao" && e2.peso === "rotina")) break;
+        aplicar(e2, false); pos++; k++;
+      }
+      desenharResto();
+      estado("Rotina · " + (ROTULO_FRENTE[ev.frente] || "") + " · evento " + pos + " de " + embutidos.length);
+      espera = DELAY.rotina;
+    } else {
+      var c = aplicar(ev, true);
+      pos++;
+      desenharResto();
+      var prev = document.querySelector(".cartao.foco");
+      if (prev) prev.classList.remove("foco");
+      if (c) {
+        if (ev.peso === "excecao") {
+          c.classList.add("foco");
+          estado("Exceção · " + (ev.motivo || ""));
+        } else {
+          estado("Atenção · " + (ev.motivo || ""));
+        }
+        if (!c.classList.contains("hidden")) c.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      } else {
+        estado((ev.motivo || ev.tipo) + " · evento " + pos + " de " + embutidos.length);
+      }
+      espera = c ? (ev.peso === "excecao" ? DELAY.excecao : DELAY.atencao) : DELAY.outro;
+    }
+    timer = setTimeout(passo, espera / vel);
+  }
+  function tocar() {
+    if (reduced) { mostrarTudo(); estado("Movimento reduzido: tudo exibido"); return; }
+    if (tocando) { parar(); estado("Pausado · evento " + pos + " de " + embutidos.length); return; }
+    if (pos >= embutidos.length || pos === 0) { novoEstado(); pos = 0; desenharResto(); }
+    tocando = true;
+    $("b-tocar").textContent = "Pausar";
+    passo();
+  }
+  function pularExcecao() {
+    if (reduced) { mostrarTudo(); return; }
+    if (pos >= embutidos.length) { novoEstado(); pos = 0; }
+    var alvo = -1;
+    for (var i = pos; i < embutidos.length; i++) {
+      if (embutidos[i].tipo === "decisao" && embutidos[i].peso === "excecao") { alvo = i; break; }
+    }
+    if (alvo < 0) { mostrarTudo(); estado("Sem mais exceções"); return; }
+    pularAte = alvo;
+    if (!tocando) { tocando = true; $("b-tocar").textContent = "Pausar"; }
+    if (timer) { clearTimeout(timer); timer = null; }
+    passo();
+  }
+
+  // ---- B: live ----
+  var es = null;
+  function rodarAoVivo() {
+    novoEstado();
+    desenharResto();
+    if (es) { es.close(); es = null; }
+    var b = $("b-rodar");
+    b.disabled = true;
+    estado("Conectando ao motor…");
+    var pend = [], agendado = false;
+    function flush() {
+      agendado = false;
+      var frag = document.createDocumentFragment();
+      for (var i = 0; i < pend.length; i++) { var c = aplicar(pend[i], !reduced); if (c) frag.appendChild(c); }
+      var ultimo = pend[pend.length - 1];
+      pend = [];
+      $("lista").appendChild(frag);
+      desenharResto();
+      if (ultimo) estado(st.fim ? "Fechamento concluído · " + st.n + " eventos" :
+        "Ao vivo · " + st.n + " eventos · " + (ultimo.motivo || ultimo.tipo));
+    }
+    try {
+      es = new EventSource("/eventos");
+    } catch (e) { estado("Sem conexão com o servidor"); b.disabled = false; return; }
+    es.onmessage = function (m) {
+      var ev;
+      try { ev = JSON.parse(m.data); } catch (e) { return; }
+      pend.push(ev);
+      // Batch per animation frame so bursts of routine events do not block the page.
+      if (!agendado) { agendado = true; requestAnimationFrame(flush); }
+      if (ev.tipo === "fim") { es.close(); es = null; b.disabled = false; }
+    };
+    es.onerror = function () {
+      if (es && es.readyState === 2) { estado("Conexão encerrada"); b.disabled = false; }
+    };
+    fetch("/rodar", { method: "POST" }).then(function (r) {
+      if (!r.ok) { estado("Servidor recusou /rodar (" + r.status + ")"); b.disabled = false; }
+      else if (!st.fim) estado("Motor rodando…");
+    }).catch(function () { estado("Falha ao chamar /rodar"); b.disabled = false; });
+  }
+
+  // ---- wiring ----
+  desenharFiltros();
+  if (aoVivo) {
+    $("ctl-reproducao").classList.add("hidden");
+    $("ctl-vivo").classList.remove("hidden");
+    $("b-rodar").addEventListener("click", rodarAoVivo);
+    novoEstado();
+    desenharResto();
+    estado("Ao vivo · aperte Rodar fechamento");
+  } else {
+    $("b-tocar").addEventListener("click", tocar);
+    $("b-vel").addEventListener("click", function () {
+      vel = vel === 1 ? 2 : 1;
+      this.textContent = vel + "x";
+      this.setAttribute("aria-pressed", String(vel === 2));
+    });
+    $("b-pular").addEventListener("click", pularExcecao);
+    $("b-tudo").addEventListener("click", mostrarTudo);
+    mostrarTudo();
+  }
+})();
+</script>
+</body>
+</html>
