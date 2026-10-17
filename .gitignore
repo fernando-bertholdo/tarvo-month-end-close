@@ -1,0 +1,31 @@
+# Secrets
+.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# macOS
+.DS_Store
+*.log
+
+# Template workflow files (local only, never versioned)
+.claude/
+.planning/
+conducao/
+briefing/
+contexto/
+verificacao/
+inputs/
+tests/
+entrega/
+KICKOFF_GUIDE.md
+Projeto.md
+FUTURE_WORK.md
+src/.gitkeep
+.multica/
+.agent_context/
