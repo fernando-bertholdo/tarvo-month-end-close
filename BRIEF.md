@@ -2,7 +2,7 @@
 
 - **Cliente:** Tarvo Pagamentos, subadquirente de educação internacional (checkout pela Orbe, remessas pela Ponte Câmbio).
 - **Dor:** o fechamento leva oito dias úteis, depende de regras que só uma pessoa sabe e só acha taxa errada quando o lojista reclama.
-- **O momento que convence:** a escolher (Fernando).
+- **O momento que convence:** o rastro de um número. Uma divergência da Rota Global (87 transações, R$ 1.546,28 a cobrar da Orbe) é aberta até a linha da Orbe e a taxa da planilha: o erro que hoje só aparece quando o lojista reclama.
 - **O que o agente faz:** lê os arquivos do mês como vêm, aplica as regras do financeiro, calcula comissões, divergências e notas, classifica os extratos e anota cada decisão com a linha de origem.
 - **Onde para:** no que exige uma pessoa (taxa sem contrato, spread negativo, crédito sem identificação). Vira pendência com motivo e área que decide.
 - **Dados:** data pack de setembro/2026 do case, em `dados/`, incluindo o arquivo 06 de ajustes tardios.

@@ -1,5 +1,5 @@
 {
-  "executado_em": "2026-10-17T21:00:59Z",
+  "executado_em": "2026-10-17T21:07:00Z",
   "pasta": "dados",
   "arquivos": [
     {
@@ -44,6 +44,6 @@
     "notas": 21,
     "pendencias": 15,
     "lancamentos": 184,
-    "duracao_s": 0.07
+    "duracao_s": 0.06
   }
 }

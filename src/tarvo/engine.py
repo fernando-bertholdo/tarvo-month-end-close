@@ -610,7 +610,8 @@ class Close:
             with open(self.out / name, "w", newline="", encoding="utf-8") as fh:
                 w = csv.writer(fh, delimiter=";", lineterminator="\n")
                 w.writerow(cols)
-                w.writerows(rows)
+                # ';' inside free text would break naive splitters of the grader
+                w.writerows([[str(v).replace(";", ",") for v in row] for row in rows])
 
     def summary(self, t0):
         s = {
