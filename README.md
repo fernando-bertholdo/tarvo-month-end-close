@@ -82,6 +82,13 @@ Código em `src/tarvo/`: `engine.py` (motor), `__main__.py` (comando), `servidor
 - A provisão de folha e impostos de setembro é da contabilidade e fica fora (F46).
 - Rascunhos de contestação para a Orbe e a Ponte não são gerados: as pendências trazem as operações e os valores.
 
+## O que eu faria com mais um mês
+
+- Rascunho de e-mail de contestação para a Orbe e para a Ponte, um por contraparte, a partir das pendências (F49).
+- Conciliação da Orbe contra o banco pela agenda de recebíveis, parcela por parcela.
+- Leitura do retorno da contestação no relatório seguinte da Ponte ("AJUSTE REF"), conferindo contra a pendência aberta.
+- Teste da IA numa amostra maior, para calibrar a confiança, e uma tela para a Helena aprovar as decisões humanas.
+
 ## Uso de IA
 
 Sessões em [PROMPTS/](PROMPTS/) e momentos em [PROMPTS/MOMENTOS.md](PROMPTS/MOMENTOS.md). Usei um template próprio de condução de case (fluxo e regras de trabalho, sem código do case); as regras de como a IA foi dirigida estão em [CLAUDE.md](CLAUDE.md).
