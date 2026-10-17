@@ -67,7 +67,7 @@ Código em `src/tarvo/`: `engine.py` (motor), `__main__.py` (comando), `servidor
 ## Onde a IA entra e onde não entra
 
 - **Não entra em nenhum valor em reais.** Comissão, divergência, nota e pendência saem de regra.
-- **Entra só na conta de lançamento de extrato que nenhuma regra cobre.** Ela propõe uma conta que existe no plano de contas, com confiança e motivo, ou passa o caso para uma pessoa. Resposta validada por esquema; abaixo de 0,80 de confiança, ou se a resposta não validar, vira Decisão humana. Cada decisão fica num cache versionado, para que a mesma rodada dê o mesmo resultado.
+- **Entra só na conta de lançamento de extrato que nenhuma regra cobre.** Ela propõe uma conta que existe no plano de contas, com confiança e motivo, ou passa o caso para uma pessoa. Resposta validada por esquema; abaixo de 0,90 de confiança, ou se a resposta não validar, vira Decisão humana. Cada decisão fica num cache versionado, para que a mesma rodada dê o mesmo resultado.
 - **Na construção:** o Claude Code foi dirigido pelo Fernando, com conferência independente dos totais por um subagente que não viu o código ([PROMPTS/](PROMPTS/)).
 
 ## Hipóteses e perguntas ao financeiro
@@ -76,7 +76,7 @@ Código em `src/tarvo/`: `engine.py` (motor), `__main__.py` (comando), `servidor
 
 ## Limitações conhecidas
 
-- A confiança da IA é declarada pelo modelo, não calibrada.
+- A confiança da IA é declarada pelo modelo, não calibrada. Teste cego em 40 lançamentos que a regra já classifica (sem as respostas nem exemplos delas): 29 acertos, nenhuma conta errada, 8 casos passados a uma pessoa e 3 respostas fora do esquema. Com o limite em 0,90, as 25 aceitas estavam certas. A amostra é pequena (`python3 -m src.tarvo.avaliar_ia`).
 - A conciliação da Orbe contra o banco, parcela por parcela, não é feita (F33): os créditos da Orbe são classificados, não conciliados.
 - O casamento de Pix com lojista usa o começo do nome no extrato; nome novo, fora da planilha e do relatório da Orbe, vai para a etapa de IA ou para uma pessoa.
 - A provisão de folha e impostos de setembro é da contabilidade e fica fora (F46).

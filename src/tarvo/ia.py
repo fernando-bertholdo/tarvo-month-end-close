@@ -19,7 +19,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 CACHE_PATH = Path(__file__).resolve().parent / "ia_cache.json"
 DEFAULT_MODEL = "claude-sonnet-5-5"
-DEFAULT_THRESHOLD = 0.80
+DEFAULT_THRESHOLD = 0.90  # raised from 0.80 by Fernando after the blind test (17/10)
 API_URL = "https://api.anthropic.com/v1/messages"
 TIMEOUT_S = 60
 
