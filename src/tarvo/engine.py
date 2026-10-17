@@ -359,7 +359,7 @@ class Close:
                 causa = "estorno de venda com taxa errada" if tipo == "ESTORNO" else "taxa aplicada diferente do contrato"
                 self.divergencias.append([did, c["cnpj"], "CHECKOUT", ref, f"{contr_pct:.2f}", f"{aplicada:.2f}", fmt(diff), causa, c["nome"]])
                 self.rastro.append([did, arq, ref, fmt(diff), "F11: bruto x (aplicada - contratada)"])
-                div_by_merchant[c["cnpj"]].append((ref, diff, arq, c["nome"]))
+                div_by_merchant[c["cnpj"]].append((ref, diff, arq, c["nome"], r2(taxa_orbe - com)))
                 self.dec("CHECKOUT", arq, ref, "F11/F36/F63", "divergencia", diff,
                          f"Orbe aplicou {aplicada:.2f}% e o contrato é {contr_pct:.2f}%", peso="atencao", id_saida=did)
         # commission per merchant (F1, F30)
@@ -376,7 +376,7 @@ class Close:
         for cnpj, lines in div_by_merchant.items():
             tot = sum((l[1] for l in lines), Decimal("0"))
             self.pend("DIVERGENCIA_ORBE", [l[0] for l in lines], tot,
-                      f"{lines[0][3]}: contestar com a Orbe a taxa acima do contrato e ressarcir o lojista (F2, F58, F63)",
+                      f"{lines[0][3]}: contestar com a Orbe a taxa acima do contrato (valor pela fórmula, F11) e ressarcir o lojista pelo descontado de fato, R$ {sum((l[4] for l in lines), Decimal('0'))} (F2, F58, F63, F72)",
                       "Financeiro", lines[0][2], regra="F58", rastro_vals=[(l[0], l[1]) for l in lines])
         self.divergencia_orbe = sum((l[1] for ls in div_by_merchant.values() for l in ls), Decimal("0"))
         # Casa do Estudante refund (F37, F57, F70, F72)
