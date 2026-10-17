@@ -415,6 +415,12 @@ class Close:
             c = self.contract_for_cnpj(p["cnpj"])
             contr = (c["J"] if c and c["J"] is not None else DEFAULT_SPREAD)
             contract_spread = r2(p["me"] * p["ptax"] * contr)
+            if "AJUSTE REF" in p["obs"].upper():  # F69; S61 open: premise = Tarvo's 50% share
+                com = r2(p["spread"] * Decimal("0.5"))
+                per.setdefault(p["cnpj"], {"nome": c["nome"] if c else p["cliente"], "lines": []})["lines"].append((op, com))
+                self.nota_ponte_lines.append((op, com))
+                self.dec("REMESSA", arq, op, "F69", "ajuste", com, f"ajuste de contestação da Ponte ({p['obs']}): abate 50% na nota do mês", peso="atencao")
+                continue
             if p["spread"] < 0:  # F17, F65
                 self.pend("SPREAD_NEGATIVO", [op], p["spread"],
                           f"spread negativo do relatório R$ {p['spread']}; diferença até o contrato R$ {contract_spread - p['spread']} (spread contratado R$ {contract_spread}); fora da comissão e da nota, contestar com a Ponte (F17, F65)",

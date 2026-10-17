@@ -37,4 +37,5 @@ O canal `#tarvo-financeiro` é público: as respostas a qualquer time valem para
 | Comissão da Casa do Estudante negativa (−R$ 5,50, estornos de vendas de agosto): sem nota e pendência | F5 e F68 | regra |
 | Lançamento que nenhuma regra cobre vai para a etapa de IA; sem IA ou abaixo de 0,80 de confiança, vira Decisão humana do Financeiro | o fechamento não para por falta de IA; em setembro todos os 184 lançamentos saem por regra | desenho do Fernando (D35) |
 | Pendências de acompanhamento (Pix sem identificação, transferência de R$ 300 mil, conferência do crédito da Ponte) entram em `pendencias.csv` | L6: acompanhamento com motivo e próximo passo não é alarme falso | regra (L6) |
+| Ajuste de contestação da Ponte ("AJUSTE REF PC-…", F69) abate 50% do Spread R$ do ajuste na comissão e na nota única do mês em que aparece | a pergunta "inteiro ou participação" (S61) ficou sem resposta; 50% é coerente com a comissão de 50% do spread (F12). Não ocorre em setembro | critério do time |
 | Os dados do case vão em `dados/` no repositório | a banca roda do zero numa pasta limpa | decisão do Fernando, 17/10 9h |
