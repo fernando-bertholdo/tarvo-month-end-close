@@ -8,7 +8,9 @@ Usage, from the repository root:
 From any folder: python3 <repo>/src/tarvo/servidor.py <month_folder> [...].
 
 Endpoints:
-    GET  /          the page template (vitrine), served as is
+    GET  /          the page (vitrine) in live mode: no events embedded yet
+    GET  /dados     origin lines of the month folder and, once a run is done, the engine
+                    outputs checked against that run's events (what the drill-down shows)
     POST /rodar     starts one close run in a background thread (202, or 409 if busy)
     GET  /eventos   Server-Sent Events with the events of the current run,
                     paced by `peso`; the stream closes after the `fim` event
@@ -184,7 +186,9 @@ def make_handler(state: State, page: Path):
         def do_GET(self):
             path = urlparse(self.path).path
             if path in ("/", "/index.html", "/painel.html"):
-                self._serve_file(page)
+                self._serve_page()
+            elif path == "/dados":
+                self._serve_data()
             elif path == "/eventos":
                 self._stream_events()
             elif path == "/favicon.ico":
@@ -208,6 +212,31 @@ def make_handler(state: State, page: Path):
                 self._json(202, {"status": "iniciado"})
             else:
                 self._json(409, {"status": "em curso"})
+
+        def _serve_page(self) -> None:
+            if page.resolve() != DEFAULT_VITRINE.resolve():
+                self._serve_file(page)
+                return
+            try:
+                from src.tarvo.painel import render  # read per request: the template may change
+
+                body = render(None, None, template=page).encode("utf-8")
+            except (OSError, ValueError) as exc:
+                self._send(500, f"pagina indisponivel: {exc}".encode("utf-8"), "text/plain; charset=utf-8")
+                return
+            self._send(200, body, "text/html; charset=utf-8")
+
+        def _serve_data(self) -> None:
+            from src.tarvo.painel import collect_data
+
+            run = state.run
+            events = list(run.events) if run is not None and run.done else None
+            month = state.month_dir if state.month_dir.is_dir() else None
+            try:
+                data = collect_data(events, month_dir=month, out_dir=Path("saida"))
+            except Exception as exc:  # the drill-down is optional; the live screen keeps working
+                data = {"versao": 1, "origem": {}, "saida": None, "avisos": [f"dados indisponíveis: {exc}"]}
+            self._json(200, data)
 
         def _serve_file(self, file: Path) -> None:
             try:
