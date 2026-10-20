@@ -143,6 +143,12 @@ Embaixo, os grupos: divergências de taxa por lojista e contraparte (tabela com 
 quem decide) e a lista de pendências com motivo em linguagem de financeiro. Nada de mural de cartões
 iguais: o que é rotina aparece como total, não como item.
 
+Desde a r4 (pós-entrega): embaixo da tabela, a faixa de origem do primeiro grupo, visível sem clicar
+(contrato, o que a contraparte cobrou, a diferença numa venda, operações e total a cobrar); e cada
+pendência numa linha só (título curto, valor, dono), com o motivo na gaveta. Todo número vem de um
+campo do motor (`src/CONTRATO_EVENTOS.md`): a página formata, não soma nem conta. Ver "Mudanças",
+Diretor, 19/10, 22:35 BRT.
+
 ### Estado B. Reprodução (botão "Tocar o fechamento")
 
 Pedido do Fernando às 13h26 de 17/10: o agente atuando em duas frentes ao mesmo tempo, com ritmo,
@@ -581,3 +587,61 @@ comunica. Duração-alvo: até 84 s (2.520 quadros).
   1280, a linha focada da Mundo Aberto chega ao limite de 3 linhas e corta o nome em "INTERCÂ", sem
   reticência. Fica para o Fernando decidir se vale outra passada. O painel desta versão é o v5 da
   entrega.
+
+- **Diretor, 19/10, 22:35 BRT, painel r4 (refino depois da entrega).** O motor do `refino/motor`
+  (PR 1) passou a emitir pronto tudo o que o v5 somava, contava ou tirava do texto: campos e
+  `parcial` em `src/CONTRATO_EVENTOS.md`. Quatro mudanças, nesta ordem de prioridade.
+
+  1. **Todo número da tela sai de um campo do motor.** A página formata (R$, vírgula, milhar, o
+     "mil" que o motor já arredondou, o nome do mês pela competência) e não soma, não subtrai, não
+     multiplica, não conta eventos e não tira número de texto com expressão regular. Mapa, conta a
+     conta: comissão e partes em `fim.resumo` e, corridas, no `total` lojista (`parcial.frente`,
+     `parcial.mes.comissao`); dinheiro em jogo em `resumo` e, corrido, em
+     `pendencia.parcial.mes.em_jogo`; grupo de divergência pela `pendencia` da divergência e por
+     `parcial.grupo` (sai a heurística que casava grupo e pendência); base do spread em `base`; Atlas
+     em `estimativa`, `n_linhas` e `por_tipo`; ressarcimento ao lojista em `ressarcimento`; linhas e
+     operações em `n_linhas`; contagens da mesa e barra de progresso em `parcial.etapa`; "fechando…
+     (k de N lojistas)" e "emitindo… (k de N notas)" em `parcial.frente`; pendências e donos corridos
+     em `parcial.mes`; "Feito pela regra" em `resumo.decisoes_por_etapa`; lojista sem nota em
+     `emite_nota`; "notas somam R$ 5,50 a mais" em `notas_menos_comissao`; tipo da pendência em
+     `tipo_pendencia`; mês e mês seguinte em `competencia` e `competencia_seguinte`. Ao vivo, a página
+     vive só dos eventos (o `/dados` traz `saida: null` durante a rodada). Número que a tela mostra e
+     o motor não emite não é calculado: o Animador tira da tela ou avisa o Diretor, que decide entre
+     campo novo no motor (com a diferença declarada na regressão) e texto sem o número.
+  2. **Faixa de origem embaixo da tabela de divergências**, empréstimo da versão refinada
+     (`retro/telas/fim-3-refinada.jpg`). Visível sem clicar, para o primeiro grupo da tabela (Rota
+     Global). Título "Origem · Rota Global Intercâmbio" e quatro elos, da esquerda para a direita:
+     "Contrato 3,59%", "A Orbe cobrou 4,09%", "R$ 32,25 a mais nesta venda" com "0,50 ponto", e, em
+     destaque, "87 operações · R$ 1.546,28 a cobrar da Orbe" com "Decide: Financeiro". A venda de
+     exemplo é a mesma da gaveta. Sem identificador, código de regra ou nome de arquivo (ficam no
+     Rastro técnico) e sem glifo de seta: a ordem vem do layout, e um conector, se houver, é desenhado
+     em vetor. O clique na faixa abre a gaveta da Rota Global, como a linha da tabela. Fontes: as
+     taxas e `diferenca_pp` da divergência de exemplo, o `valor` dela, `parcial.grupo.n` e o `valor`
+     da pendência.
+  3. **Pendências em uma linha cada no Resumo**, empréstimo da refinada: título curto, valor e selo
+     "Decide: <área>" na mesma linha. O motivo e o complemento (operações, data, crédito previsto)
+     saem da lista e ficam na gaveta, que abre no clique da linha. Os títulos curtos são os do
+     dicionário da Reprodução (r2). Filtro por dono e contagem ficam como estão. Se um título não
+     couber numa linha em alguma tela (1440, 1280, projeção), o Animador avisa; nunca corta com "…".
+  4. **Resíduo "INTERCÂ"** (conferência do Diretor de 19/10, 01:55): na Remessa em projeção a 1280, a
+     linha focada da Mundo Aberto mostra o nome inteiro, sem corte nem reticência, e a linha do motor
+     e a contagem não pulam.
+
+  **Restos do inventário, decididos.**
+  - "e mais N" (total menos o corte da página) vira "{mostradas} de {n}", por exemplo "10 de 87
+    operações", com o `n` do motor (`n_linhas` ou `parcial.grupo.n`): a página diz quantas mostra e não
+    subtrai.
+  - Spread em % das linhas da Ponte sem divergência e datas seriais do Excel: a conversão sai da
+    página e vai para a exportação de origem do `painel.py` (Python, com teste), que passa a entregar,
+    junto da linha como chegou, o spread em % (como a planilha o mostra) e a data em ISO. A página só
+    formata. As células da linha "como chegou" continuam as do arquivo.
+  - Nome do lojista pelo cadastro: é busca, não conta; fica.
+  - "crédito previsto para 06/10": a página para de tirar a data do motivo; a gaveta mostra o motivo
+    do motor como ele vem.
+  - Nenhum outro texto aprovado muda, além dos títulos curtos na lista do Resumo e do "{k} de {n}".
+
+  **Evidência pedida.** Capturas de "Momentos para o Engenheiro de render capturar", mais: Resumo com a
+  faixa e a lista em uma linha (1440 e 1280), gaveta de uma pendência aberta pela lista, projeção a
+  1280 na Mundo Aberto e o modo ao vivo. Relatório técnico em `reviews/tecnico-painel-r4.md`, com cada
+  conta trocada (função antiga e campo novo) e a busca que mostra que não sobrou soma, contagem nem
+  expressão regular de número na página. Depois, Crítico r4 em contexto novo.
