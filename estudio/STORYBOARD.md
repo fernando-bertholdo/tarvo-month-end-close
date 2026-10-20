@@ -645,3 +645,51 @@ comunica. Duração-alvo: até 84 s (2.520 quadros).
   1280 na Mundo Aberto e o modo ao vivo. Relatório técnico em `reviews/tecnico-painel-r4.md`, com cada
   conta trocada (função antiga e campo novo) e a busca que mostra que não sobrou soma, contagem nem
   expressão regular de número na página. Depois, Crítico r4 em contexto novo.
+
+- **Animador, 19/10, painel r4 (23:26 BRT).** A ordem do Diretor de 22:35, na ordem de prioridade dele. Evidência em
+  `reviews/tecnico-painel-r4.md`; telas em `out/previews/painel-r4/`, folha em `reviews/contact-sheets/painel-r4.png`.
+
+  *Duração da Reprodução: 103,8 s em 1x (52,0 s em 2x, na parede), antes 102,5 s e 51,4 s.* As mesmas 22 linhas
+  narradas, com as mesmas palavras e na mesma ordem; nenhuma pausa abaixo da regra (a Bridge segue na pausa mínima,
+  por decisão do Diretor). O 1,3 s a mais vem do motor refinado: ele lê os sete arquivos na etapa 1 (antes, Aurora e
+  Meridiano chegavam na etapa dos extratos), e a leitura dos arquivos foi de 4,7 s para 6,2 s; como a variação com
+  semente fixa (até 8% acima da regra) é sorteada na ordem dos eventos, os dois eventos a mais deslocam os sorteios
+  seguintes, e cada pausa muda alguns décimos para cima ou para baixo, sempre acima da regra. Por etapa:
+  leitura 6,2 s; checkout 33,1 s; remessa 30,8 s; notas 14,1 s; extratos 14,8 s; recapitulação 4,4 s. Os totais de
+  frente que o motor agora emite entram no relógio sem duração.
+
+  1. *Todo número da tela sai de um campo do motor.* Resumo, gavetas, mesa, impacto e ao vivo leem o `resumo` do fim,
+     os `parcial` por escopo e os campos de cada evento; a página formata. As 45 linhas do inventário foram trocadas
+     (tabela no relatório técnico). O grupo de divergência é o da pendência que o motor nomeia (`pendencia`), sem a
+     heurística. A conta antiga somava os totais de frente como se fossem lojistas: com os eventos novos, o v5
+     mostrava R$ 486.557,58 de comissão. Ao vivo, a mesa passa a dizer "de N decisões" desde a primeira decisão, com o
+     `n` do motor. Ficam na página, declaradas no relatório: a animação do contador entre dois valores do motor
+     (`STYLE.md`, "Contador"); a reescrita em pt-BR dos números da nota do motor no Rastro técnico (achado 11, r2);
+     contas de relógio e de layout, que nunca vão à tela; e o zero do estado vazio.
+  2. *Faixa de origem* embaixo da tabela de divergências, para o primeiro grupo (Rota Global): título
+     "Origem · Rota Global Intercâmbio" e quatro elos, "Contrato 3,59%", "A Orbe cobrou 4,09%" (com o ícone de
+     crítico), "R$ 32,25 a mais nesta venda" com "0,50 ponto" e, em destaque pelo tamanho e pela superfície 2,
+     "87 operações · R$ 1.546,28 a cobrar da Orbe" com "Decide: Financeiro". Conector em vetor, sem glifo; sem
+     identificador. O clique abre a gaveta da Rota Global e seleciona a linha dela na tabela. O título tira o "Ltda"
+     do nome, como no texto do Diretor; a tabela continua com o nome do cadastro.
+  3. *Pendências em uma linha cada*: título curto do dicionário da Reprodução, valor e selo "Decide: <área>". A coluna
+     do selo tem a largura do maior selo, e os valores terminam na mesma borda; o título fica a 15 px (tabela), e o
+     ícone de pessoa do começo da linha saiu (o selo já o traz). O complemento (operações, data, o que conferir) foi
+     para a gaveta, embaixo do valor. **Aviso, como o Diretor pediu:** nem todo título cabe numa linha com valor e selo
+     na coluna da direita. A 1440, quebram 3: "Contestar com a Ponte · Mundo Aberto", "Conferir o crédito da Ponte
+     contra a nota", "Transferência para o Meridiano, em trânsito". A 1280, quebram 10. Em projeção (1440 e 1280),
+     nenhum. Quem quebra vai para duas linhas na própria coluna, sem "…", e o nome depois do "·" não se separa.
+  4. *Resíduo "INTERCÂ": não é corte da página.* A célula "Cliente" do anexo da Ponte vem com 20 caracteres em todas
+     as linhas ("MUNDO ABERTO INTERCÂ", "MAPLE STUDY ASSESSOR", "NÓRDICA EDUCAÇÃO INT"), e a linha focada da projeção
+     a 1280 já mostra a célula inteira, em 3 linhas, sem reticência; a contagem fica 5 px acima da legenda, como na r3.
+     Não troquei a fonte da coluna. Para o Diretor decidir: manter a célula como chegou, ou mostrar na coluna "Cliente"
+     da mesa o nome do cadastro ("Mundo Aberto") e deixar a célula crua na gaveta.
+  5. *Restos do inventário.* "{mostradas} de {n}" no lugar de "e mais N" ("10 de 87 operações", "6 de 118 linhas",
+     "8 de 119 linhas", "12 de 85 lançamentos"); spread em pontos e datas ISO entregues pelo `painel.py` junto da
+     linha como chegou (teste em `tests/test_painel.py`); a gaveta da Ponte mostra o motivo do motor como vem (com o
+     "06/10") no Rastro técnico.
+
+  *Textos novos:* "Origem · <lojista>" e os rótulos da faixa ("Contrato", "A Orbe cobrou", "a mais nesta venda",
+  "a cobrar da Orbe", "<n> operações"); "{k} de {n} <unidade>"; na gaveta da pendência, o complemento com inicial
+  maiúscula ("Nota única de remessa."); ao vivo, antes do motor, o título "Fechamento · Tarvo" (o mês só aparece
+  quando o motor diz a competência).
