@@ -78,6 +78,21 @@ def fmt(x) -> str:
     return f"{x:.2f}" if isinstance(x, Decimal) else str(x)
 
 
+def num(v):
+    """Event values as JSON numbers, nested dicts and lists included."""
+    if isinstance(v, Decimal):
+        return float(v)
+    if isinstance(v, dict):
+        return {k: num(x) for k, x in v.items()}
+    if isinstance(v, (list, tuple)):
+        return [num(x) for x in v]
+    return v
+
+
+# Weight of a decision -> the bucket the screen counts it in.
+BUCKET = {"rotina": "regra", "atencao": "sinalizadas", "excecao": "pessoa"}
+
+
 # ---------------------------------------------------------------- readers
 
 def read_xlsx(data: bytes) -> dict[str, list[dict[str, str]]]:
@@ -127,22 +142,58 @@ class Close:
         self.comissoes, self.divergencias, self.notas = [], [], []
         self.lancamentos, self.pendencias = [], []
         self.ids = defaultdict(int)
+        self.buffer = None  # events of the stage in progress, published by flush()
+        self.stage_counts = OrderedDict()  # stage -> {total, regra, sinalizadas, pessoa}
+        # running month values, so the page never adds: commission, divergences, pendências
+        self.com_corrida = Decimal("0")
+        self.n_div = 0
+        self.por_dono = OrderedDict()
+        self.em_jogo = OrderedDict((k, Decimal("0")) for k in ("acima_do_contrato", "orbe", "ponte", "devolver_casa", "atlas_estimativa"))
 
     # ------------------------------------------------------------ helpers
     def ev(self, tipo, **kw):
         self.seq += 1
         e = {"seq": self.seq, "ts": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "tipo": tipo}
         for k, v in kw.items():
-            e[k] = float(v) if isinstance(v, Decimal) else v
+            e[k] = num(v)
+        if self.buffer is None:
+            self.publish(e)
+        else:
+            self.buffer.append(e)
+        return e
+
+    def publish(self, e):
         self.events.append(e)
         if self.emit_cb:
             self.emit_cb(e)
 
+    def flush(self, etapa):
+        """Publish the stage's events, each decision with its place in the stage (k of n, buckets).
+
+        The stage is held until it ends (milliseconds) so every event already knows n.
+        """
+        evs, self.buffer = self.buffer or [], None
+        n = {t: sum(e["tipo"] == t for e in evs) for t in ("decisao", "arquivo")}
+        k = {"decisao": 0, "arquivo": 0}
+        conta = OrderedDict((b, 0) for b in ("regra", "sinalizadas", "pessoa"))
+        for e in evs:
+            e["etapa"] = etapa
+            if e["tipo"] in k:
+                k[e["tipo"]] += 1
+                pos = {"k": k[e["tipo"]], "n": n[e["tipo"]]}
+                if e["tipo"] == "decisao":
+                    conta[BUCKET[e["peso"]]] += 1
+                    pos.update(conta)
+                e["parcial"] = {"etapa": pos, **e.get("parcial", {})}
+            self.publish(e)
+        if n["decisao"]:
+            self.stage_counts[etapa] = {"total": n["decisao"], **conta}
+
     def dec(self, frente, arquivo, ref, regra, resultado, valor, motivo, metodo="REGRA",
             peso="rotina", id_saida="", quem_decide="", **extra):
-        self.ev("decisao", frente=frente, fonte={"arquivo": arquivo, "ref": ref}, regra=regra,
-                resultado=resultado, valor=valor, motivo=motivo, metodo=metodo,
-                quem_decide=quem_decide, peso=peso, id_saida=id_saida, **extra)
+        return self.ev("decisao", frente=frente, fonte={"arquivo": arquivo, "ref": ref}, regra=regra,
+                       resultado=resultado, valor=valor, motivo=motivo, metodo=metodo,
+                       quem_decide=quem_decide, peso=peso, id_saida=id_saida, **extra)
 
     def new_id(self, prefix):
         self.ids[prefix] += 1
@@ -152,7 +203,7 @@ class Close:
         self.warnings.append(msg)
         self.ev("aviso", motivo=msg)
 
-    def pend(self, tipo, refs, valor, motivo, quem, arquivo, frente="PENDENCIAS", regra="", rastro_vals=None):
+    def pend(self, tipo, refs, valor, motivo, quem, arquivo, frente="PENDENCIAS", regra="", rastro_vals=None, **extra):
         pid = self.new_id("PEN")
         if rastro_vals is None and len(refs) == 1:
             rastro_vals = [(refs[0], valor)]
@@ -160,9 +211,33 @@ class Close:
         for ref, v in (rastro_vals or [(r, None) for r in refs]):
             if v is not None:
                 self.rastro.append([pid, arquivo, ref, fmt(v), regra])
+        self.por_dono[quem] = self.por_dono.get(quem, 0) + 1
+        part = {"DIVERGENCIA_ORBE": "orbe", "DIVERGENCIA_PONTE": "ponte", "DEVOLUCAO_LOJISTA": "devolver_casa"}.get(tipo)
+        if part:
+            self.em_jogo[part] += valor
+            self.em_jogo["acima_do_contrato"] = self.em_jogo["orbe"] + self.em_jogo["ponte"]
+        if tipo == "SEM_CONTRATO" and "estimativa" in extra:
+            self.em_jogo["atlas_estimativa"] += extra["estimativa"]["valor"]
+        mes = {"pendencias": len(self.pendencias), "por_dono": dict(self.por_dono), "em_jogo": dict(self.em_jogo)}
         self.dec(frente, arquivo, refs[0] if len(refs) == 1 else f"{len(refs)} linhas", regra, "pendencia",
-                 valor, motivo, metodo="HUMANO", peso="excecao", id_saida=pid, quem_decide=quem)
+                 valor, motivo, metodo="HUMANO", peso="excecao", id_saida=pid, quem_decide=quem,
+                 tipo_pendencia=tipo, n_linhas=len(refs), parcial={"mes": mes}, **extra)
         return pid
+
+    def merchant_total(self, frente, cid, nome, total, n_lines, unit, k, n, corrida, **extra):
+        """Commission of one merchant (escopo lojista), with the running sum of its front and month."""
+        self.com_corrida += total
+        self.ev("total", frente=frente, escopo="lojista", resultado="comissao_lojista", valor=total, id_saida=cid,
+                motivo=f"{nome}: {n_lines} {unit}", n_linhas=n_lines, **extra,
+                parcial={"frente": {"k": k, "n": n, "valor": corrida}, "mes": {"comissao": self.com_corrida}})
+
+    def close_group(self, events, pid):
+        """Tie each divergence to the claim that covers it, with the running sum inside the claim."""
+        corrida = Decimal("0")
+        for i, e in enumerate(events, 1):
+            corrida += Decimal(str(e["valor"]))
+            e["pendencia"] = pid
+            e["parcial"]["grupo"] = {"k": i, "n": len(events), "valor": float(corrida)}
 
     # ------------------------------------------------------------ inputs
     def load(self):
@@ -197,7 +272,9 @@ class Close:
         if f02:
             book = read_xlsx(f02.read_bytes())
             self.files.append({"arquivo": f02.name, "linhas": sum(len(v) for v in book.values())})
-            self.ev("arquivo", fonte={"arquivo": f02.name, "ref": ""}, linhas=len(book.get("Taxas vigentes", [])), motivo="planilha de taxas lida")
+            # linhas: the current tab, the one the engine reads; linhas_no_arquivo: every tab
+            self.ev("arquivo", fonte={"arquivo": f02.name, "ref": ""}, linhas=len(book.get("Taxas vigentes", [])), motivo="planilha de taxas lida",
+                    linhas_no_arquivo=sum(len(v) for v in book.values()))
             if "Taxas vigentes" not in book:
                 self.warn(f"{f02.name}: layout mudou (sem a aba 'Taxas vigentes'); checkout e divergências de spread bloqueados (F71).")
             for row in book.get("Taxas vigentes", []):
@@ -241,6 +318,7 @@ class Close:
             self.warn("Arquivo 05a (Aurora) ausente: lançamentos do Aurora bloqueados (F71).")
         if not self.f05b:
             self.warn("Arquivo 05b (Meridiano) ausente: lançamentos do Meridiano bloqueados e transferências do Aurora sem conferência (F71).")
+        self.statements = self.statement_lines()  # read with the other files: stage LEITURA
         self.competencia, self.competencia_seguinte = self.month_of_close()
 
     def month_of_close(self):
@@ -356,7 +434,7 @@ class Close:
             aplicada = dec_br(r["taxa_aplicada_pct"])
             base_date = date_br(r["data_venda_original"]) if tipo in ("ESTORNO", "REVERSAO ANTECIPACAO") and r["data_venda_original"] else date_br(r["data_movimento"])
             if ec == ATLAS_EC:
-                atlas_lines.append((ref, bruto, arq))
+                atlas_lines.append((ref, bruto, arq, taxa_orbe, tipo))
                 continue
             if int(r["qtd_parcelas"] or 0) > 12:  # F60
                 self.pend("PARCELAS_ACIMA_12", [ref], bruto, "venda acima de 12 parcelas, que a Tarvo não vende (F60)", "Comercial", arq, regra="F60")
@@ -378,9 +456,10 @@ class Close:
             if key not in per:
                 per[key] = {"nome": c["nome"], "lines": []}
             per[key]["lines"].append((ref, com, arq, regra))
-            self.dec("CHECKOUT", arq, ref, regra, "comissao", com,
-                     f"{tipo.lower()} {r['modalidade'].lower() or 'antecipação'}: bruto {bruto} x taxa contratada {contr * 100:.2f}%", peso="rotina")
             contr_pct = (contr * 100).quantize(Decimal("0.01"))
+            self.dec("CHECKOUT", arq, ref, regra, "comissao", com,
+                     f"{tipo.lower()} {r['modalidade'].lower() or 'antecipação'}: bruto {bruto} x taxa contratada {contr * 100:.2f}%", peso="rotina",
+                     taxa_contratada_pct=contr_pct)
             if exempt:
                 casa_lines.append((ref, r2(taxa_orbe - com), arq))  # F72
                 continue
@@ -391,26 +470,37 @@ class Close:
                 # base_brl: what the rate difference applies to (F11: the gross of the line)
                 self.divergencias.append([did, c["cnpj"], "CHECKOUT", ref, f"{contr_pct:.2f}", f"{aplicada:.2f}", fmt(diff), causa, c["nome"], fmt(bruto)])
                 self.rastro.append([did, arq, ref, fmt(diff), "F11: bruto x (aplicada - contratada)"])
-                div_by_merchant[c["cnpj"]].append((ref, diff, arq, c["nome"], r2(taxa_orbe - com)))
-                self.dec("CHECKOUT", arq, ref, "F11/F36/F63", "divergencia", diff,
-                         f"Orbe aplicou {aplicada:.2f}% e o contrato é {contr_pct:.2f}%", peso="atencao", id_saida=did,
-                         base=bruto)
+                self.n_div += 1
+                e = self.dec("CHECKOUT", arq, ref, "F11/F36/F63", "divergencia", diff,
+                             f"Orbe aplicou {aplicada:.2f}% e o contrato é {contr_pct:.2f}%", peso="atencao", id_saida=did,
+                             base=bruto, taxa_contratada_pct=contr_pct, taxa_aplicada_pct=aplicada,
+                             diferenca_pp=aplicada - contr_pct, parcial={"mes": {"divergencias": self.n_div}})
+                div_by_merchant[c["cnpj"]].append((ref, diff, arq, c["nome"], r2(taxa_orbe - com), tipo, e))
         # commission per merchant (F1, F30)
         self.com_checkout = {}
-        for cnpj, d in per.items():
+        corrida = Decimal("0")
+        for k, (cnpj, d) in enumerate(per.items(), 1):
             cid = self.new_id("COM")
             total = sum((l[1] for l in d["lines"]), Decimal("0"))
             self.comissoes.append([cid, cnpj, d["nome"], "CHECKOUT", fmt(total)])
             for ref, com, arq, regra in d["lines"]:
                 self.rastro.append([cid, arq, ref, fmt(com), regra])
             self.com_checkout[cnpj] = (d["nome"], total, d["lines"])
-            self.ev("total", frente="CHECKOUT", resultado="comissao_lojista", valor=total, id_saida=cid, motivo=f"{d['nome']}: {len(d['lines'])} linhas")
+            corrida += total
+            self.merchant_total("CHECKOUT", cid, d["nome"], total, len(d["lines"]), "linhas", k, len(per), corrida,
+                                emite_nota=total > 0)  # F5
+        if per:
+            self.ev("total", frente="CHECKOUT", escopo="frente", resultado="comissao", valor=corrida, n_lojistas=len(per),
+                    motivo=f"comissão de checkout fechada: {len(per)} lojistas")
         # Orbe divergence claims: one per counterparty and merchant (F58)
         for cnpj, lines in div_by_merchant.items():
             tot = sum((l[1] for l in lines), Decimal("0"))
-            self.pend("DIVERGENCIA_ORBE", [l[0] for l in lines], tot,
-                      f"{lines[0][3]}: contestar com a Orbe a taxa acima do contrato (valor pela fórmula, F11) e ressarcir o lojista pelo descontado de fato, R$ {sum((l[4] for l in lines), Decimal('0'))} (F2, F58, F63, F72)",
-                      "Financeiro", lines[0][2], regra="F58", rastro_vals=[(l[0], l[1]) for l in lines])
+            ressarc = sum((l[4] for l in lines), Decimal("0"))
+            pid = self.pend("DIVERGENCIA_ORBE", [l[0] for l in lines], tot,
+                            f"{lines[0][3]}: contestar com a Orbe a taxa acima do contrato (valor pela fórmula, F11) e ressarcir o lojista pelo descontado de fato, R$ {ressarc} (F2, F58, F63, F72)",
+                            "Financeiro", lines[0][2], regra="F58", rastro_vals=[(l[0], l[1]) for l in lines],
+                            ressarcimento=ressarc, por_tipo=dict(Counter(l[5] for l in lines)))
+            self.close_group([l[6] for l in lines], pid)
         self.divergencia_orbe = sum((l[1] for ls in div_by_merchant.values() for l in ls), Decimal("0"))
         # Casa do Estudante refund (F37, F57, F70, F72)
         self.devolucao_casa = sum((l[1] for l in casa_lines), Decimal("0"))
@@ -422,9 +512,14 @@ class Close:
         if atlas_lines:
             tot = sum((l[1] for l in atlas_lines), Decimal("0"))
             self.atlas_bruto = tot
+            # reference only, never billed: what the Orbe deducted; the right value needs the rate (F7)
+            est = sum((l[3] for l in atlas_lines), Decimal("0"))
+            self.atlas_estimativa = est
             self.pend("SEM_CONTRATO", [l[0] for l in atlas_lines], tot,
                       f"Atlas Idiomas (EC {ATLAS_EC}, CNPJ {self.old_cnpj.get(norm('Atlas Idiomas Ltda'), '')}): sem taxa contratada; não faturar até o comercial confirmar, faturar setembro com outubro (F7, F44, F67). Valor = bruto transacionado",
-                      "Comercial", atlas_lines[0][2], regra="F67", rastro_vals=[(l[0], l[1]) for l in atlas_lines])
+                      "Comercial", atlas_lines[0][2], regra="F67", rastro_vals=[(l[0], l[1]) for l in atlas_lines],
+                      por_tipo=dict(Counter(l[4] for l in atlas_lines)),
+                      estimativa={"valor": est, "mil": (est / 1000).quantize(Decimal("0.1"), rounding=ROUND_HALF_UP)})
         for ec, lines in unknown.items():
             tot = sum((l[1] for l in lines), Decimal("0"))
             self.pend("SEM_CADASTRO", [l[0] for l in lines], tot, f"EC {ec} ({lines[0][3]}) sem linha vigente na planilha de taxas", "Comercial", lines[0][2], regra="F71", rastro_vals=[(l[0], l[1]) for l in lines])
@@ -474,27 +569,39 @@ class Close:
                 did = self.new_id("DIV")
                 self.divergencias.append([did, p["cnpj"], "REMESSA", op, f"{contr * 100:.2f}", f"{p['spread_pct'] * 100:.4f}", fmt(diff), "spread acima do contratado", nome, fmt(base)])
                 self.rastro.append([did, arq, op, fmt(diff), "F15/F95: Spread R$ - Valor ME x PTAX x spread contratado"])
-                div_ponte.append((op, diff, nome))
-                self.dec("REMESSA", arq, op, "F14/F15", "divergencia", diff, f"Ponte aplicou {p['spread_pct'] * 100:.2f}% e o contrato é {contr * 100:.2f}%", peso="atencao", id_saida=did,
-                         base=base)
+                self.n_div += 1
+                e = self.dec("REMESSA", arq, op, "F14/F15", "divergencia", diff, f"Ponte aplicou {p['spread_pct'] * 100:.2f}% e o contrato é {contr * 100:.2f}%", peso="atencao", id_saida=did,
+                             base=base, taxa_contratada_pct=contr * 100, taxa_aplicada_pct=p["spread_pct"] * 100,
+                             diferenca_pp=(p["spread_pct"] - contr) * 100, parcial={"mes": {"divergencias": self.n_div}})
+                div_ponte.append((op, diff, nome, e))
         self.com_remessa = {}
-        for cnpj, d in per.items():
+        corrida = Decimal("0")
+        for k, (cnpj, d) in enumerate(per.items(), 1):
             cid = self.new_id("COM")
             total = sum((l[1] for l in d["lines"]), Decimal("0"))
             self.comissoes.append([cid, cnpj, d["nome"], "REMESSA", fmt(total)])
             for op, com in d["lines"]:
                 self.rastro.append([cid, arq, op, fmt(com), "F12/F13"])
             self.com_remessa[cnpj] = total
-            self.ev("total", frente="REMESSA", resultado="comissao_lojista", valor=total, id_saida=cid, motivo=f"{d['nome']}: {len(d['lines'])} operações")
+            corrida += total
+            self.merchant_total("REMESSA", cid, d["nome"], total, len(d["lines"]), "operações", k, len(per), corrida)
+        if per:
+            self.ev("total", frente="REMESSA", escopo="frente", resultado="comissao", valor=corrida, n_lojistas=len(per),
+                    motivo=f"comissão de remessa fechada: {len(per)} lojistas")
         self.divergencia_ponte = sum((l[1] for l in div_ponte), Decimal("0"))
         if div_ponte:
-            self.pend("DIVERGENCIA_PONTE", [l[0] for l in div_ponte], self.divergencia_ponte,
-                      f"{div_ponte[0][2]}: contestar com a Ponte o spread acima do contratado; o lojista é ressarcido (F14, F15, F63)",
-                      "Financeiro", arq, frente="REMESSA", regra="F63", rastro_vals=[(l[0], l[1]) for l in div_ponte])
+            pid = self.pend("DIVERGENCIA_PONTE", [l[0] for l in div_ponte], self.divergencia_ponte,
+                            f"{div_ponte[0][2]}: contestar com a Ponte o spread acima do contratado; o lojista é ressarcido (F14, F15, F63)",
+                            "Financeiro", arq, frente="REMESSA", regra="F63", rastro_vals=[(l[0], l[1]) for l in div_ponte])
+            self.close_group([l[3] for l in div_ponte], pid)
 
     # ------------------------------------------------------------ notes
     def notas_fiscais(self):
-        for cnpj, (nome, total, lines) in getattr(self, "com_checkout", {}).items():
+        checkout = getattr(self, "com_checkout", {})
+        ponte_lines = getattr(self, "nota_ponte_lines", [])
+        n = sum(1 for (_, total, _) in checkout.values() if total > 0) + bool(ponte_lines)
+        corrida = Decimal("0")
+        for cnpj, (nome, total, lines) in checkout.items():
             if total <= 0:  # F5
                 self.pend("SALDO_NAO_POSITIVO", [l[0] for l in lines], total, f"{nome}: comissão do mês zero ou negativa; não emite nota e o negativo não passa ao mês seguinte (F5, F68)", "Financeiro", lines[0][2], frente="NOTAS", regra="F5", rastro_vals=[(l[0], l[1]) for l in lines])
                 continue
@@ -502,8 +609,10 @@ class Close:
             self.notas.append([nid, cnpj, nome, "CHECKOUT", fmt(total), f"Intermediação de pagamentos (MDR e antecipação), checkout, competência {self.competencia}"])
             for ref, com, arq, regra in lines:
                 self.rastro.append([nid, arq, ref, fmt(com), "F4"])
-            self.dec("NOTAS", lines[0][2], f"{len(lines)} linhas", "F4", "nota", total, f"nota de {nome}", peso="rotina", id_saida=nid)
-        lines = getattr(self, "nota_ponte_lines", [])
+            corrida += total
+            self.dec("NOTAS", lines[0][2], f"{len(lines)} linhas", "F4", "nota", total, f"nota de {nome}", peso="rotina", id_saida=nid,
+                     n_linhas=len(lines), parcial={"frente": {"k": len(self.notas), "n": n, "valor": corrida}})
+        lines = ponte_lines
         if lines:
             total = sum((l[1] for l in lines), Decimal("0"))
             nid = self.new_id("NF")
@@ -511,8 +620,17 @@ class Close:
             for op, com in lines:
                 self.rastro.append([nid, self.ponte_file, op, fmt(com), "F21/F103"])
             self.nota_ponte = total
-            self.dec("NOTAS", self.ponte_file, f"{len(lines)} operações", "F21/F103", "nota", total, "nota única da Ponte Câmbio", peso="atencao", id_saida=nid)
+            corrida += total
+            self.dec("NOTAS", self.ponte_file, f"{len(lines)} operações", "F21/F103", "nota", total, "nota única da Ponte Câmbio", peso="atencao", id_saida=nid,
+                     n_linhas=len(lines), parcial={"frente": {"k": len(self.notas), "n": n, "valor": corrida}})
             self.pend("CONFERIR_REPASSE", [l[0] for l in lines], total, "conferir o crédito da Ponte de 06/10 contra a nota; diferença vira pendência com a contestação (F35, F103)", "Financeiro", self.ponte_file, frente="NOTAS", regra="F103", rastro_vals=lines)
+        if self.notas:
+            por_linha = OrderedDict((ln, sum(nt[3] == ln for nt in self.notas)) for ln in ("CHECKOUT", "REMESSA"))
+            comissao = sum((t for (_, t, _) in checkout.values()), Decimal("0")) + sum(getattr(self, "com_remessa", {}).values(), Decimal("0"))
+            self.notas_menos_comissao = corrida - comissao  # what no note carries: merchants at zero or below (F5)
+            self.ev("total", frente="NOTAS", escopo="frente", resultado="notas", valor=corrida, n_notas=len(self.notas),
+                    notas_por_linha=dict(por_linha), notas_menos_comissao=self.notas_menos_comissao,
+                    motivo=f"{len(self.notas)} notas a emitir")
 
     # ------------------------------------------------------------ statements
     def statement_lines(self):
@@ -580,7 +698,7 @@ class Close:
     ]
 
     def extratos(self):
-        lines = self.statement_lines()
+        lines = self.statements
         keys = self.merchant_keys()
         unmatched = []
         for ln in lines:
@@ -595,6 +713,10 @@ class Close:
                 continue
             self.add_lanc(ln, hit[0], "REGRA", Decimal("1"), hit[1], hit[2])
         self.ai_stage(unmatched)
+        if self.lancamentos:
+            self.ev("total", frente="EXTRATOS", escopo="frente", resultado="lancamentos", valor=None,
+                    n_lancamentos=len(self.lancamentos), por_metodo=dict(Counter(l[7] for l in self.lancamentos)),
+                    motivo=f"{len(self.lancamentos)} lançamentos classificados")
         # follow-ups the finance team asked for (L6: tracking with reason is not a false alarm)
         for ln in lines:
             d = norm(ln["desc"])
@@ -674,21 +796,40 @@ class Close:
             "lancamentos": len(self.lancamentos),
             "competencia": self.competencia,
             "competencia_seguinte": self.competencia_seguinte,
+            "comissao_total": sum((Decimal(c[4]) for c in self.comissoes), Decimal("0")),
+            "lojistas": {ln: sum(c[3] == ln for c in self.comissoes) for ln in ("CHECKOUT", "REMESSA")},
+            "notas_por_linha": {ln: sum(n[3] == ln for n in self.notas) for ln in ("CHECKOUT", "REMESSA")},
+            "notas_menos_comissao": getattr(self, "notas_menos_comissao", Decimal("0")),
+            "divergencias_operacoes": {ln: sum(d[2] == ln for d in self.divergencias) for ln in ("CHECKOUT", "REMESSA")},
+            "atlas_estimativa": getattr(self, "atlas_estimativa", Decimal("0")),
+            "pendencias_por_dono": dict(self.por_dono),
+            "pendencias_por_tipo": dict(Counter(p[1] for p in self.pendencias)),
+            "decisoes": {"total": sum(s["total"] for s in self.stage_counts.values()),
+                         **{b: sum(s[b] for s in self.stage_counts.values()) for b in ("regra", "sinalizadas", "pessoa")}},
+            "decisoes_por_etapa": dict(self.stage_counts),
+            "lancamentos_por_metodo": dict(Counter(l[7] for l in self.lancamentos)),
+            "lancamentos_por_conta": dict(Counter(l[6] for l in self.lancamentos if l[6])),
             "duracao_s": round(time.time() - t0, 2),
         }
-        return {k: (float(v) if isinstance(v, Decimal) else v) for k, v in s.items()}
+        return num(s)
 
 
 def run_close(month_dir, out_dir="saida", report_dir="relatorio", emit=None) -> dict:
     t0 = time.time()
     c = Close(month_dir, out_dir, report_dir, emit)
-    c.ev("inicio", fonte={"arquivo": str(month_dir), "ref": ""}, motivo="fechamento iniciado")
+    c.buffer = []
+    inicio = c.ev("inicio", fonte={"arquivo": str(month_dir), "ref": ""}, motivo="fechamento iniciado")
     c.load()
-    for block in (c.checkout, c.remessa, c.notas_fiscais, c.extratos):
+    inicio.update(competencia=c.competencia, competencia_seguinte=c.competencia_seguinte)
+    c.flush("LEITURA")
+    for etapa, block in (("CHECKOUT", c.checkout), ("REMESSA", c.remessa), ("NOTAS", c.notas_fiscais), ("EXTRATOS", c.extratos)):
+        c.buffer = []
         try:
             block()
         except Exception as exc:  # F71: close what does not depend on the failure
             c.warn(f"bloco {block.__name__} interrompido: {type(exc).__name__}: {exc}")
+        finally:
+            c.flush(etapa)
     c.write()
     resumo = c.summary(t0)
     c.ev("fim", motivo="fechamento concluído", resumo=resumo)

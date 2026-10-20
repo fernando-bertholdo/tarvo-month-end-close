@@ -16,16 +16,32 @@ from tests.apoio import SAIDAS, TAG_DIR, Rodada, ler_csv, ler_eventos
 # New columns, appended at the end of a CSV (the grader reads the required columns by name).
 COLUNAS_NOVAS = {"divergencias_taxa.csv": ["base_brl"]}
 # New fields on events that already existed at the tag.
-CAMPOS_NOVOS = {"base", "escopo", "parcial"}
+CAMPOS_NOVOS = {
+    "etapa", "parcial", "escopo",  # stage and running values with their scope (all events)
+    "base", "taxa_contratada_pct", "taxa_aplicada_pct", "diferenca_pp", "pendencia",  # divergence
+    "tipo_pendencia", "n_linhas", "por_tipo", "ressarcimento", "estimativa",  # pendência, note, total
+    "emite_nota", "linhas_no_arquivo", "competencia", "competencia_seguinte",
+}
 # New keys in the month summary (`fim.resumo` and execucao.json).
-RESUMO_NOVO = {"competencia", "competencia_seguinte"}
+RESUMO_NOVO = {
+    "competencia", "competencia_seguinte", "comissao_total", "lojistas", "notas_por_linha",
+    "notas_menos_comissao", "divergencias_operacoes", "atlas_estimativa", "pendencias_por_dono",
+    "pendencias_por_tipo", "decisoes", "decisoes_por_etapa", "lancamentos_por_metodo",
+    "lancamentos_por_conta",
+}
 # Volatile by nature: when the run happened and how long it took.
 VOLATEIS = {"seq", "ts"}
+# Events that moved, same content: the bank statements are read with the other files.
+MOVIDOS = ("05a_", "05b_")
 
 
 def evento_novo(e: dict) -> bool:
     """Events that did not exist at the tag: front and month totals with a scope."""
     return e.get("tipo") == "total" and e.get("escopo") in ("frente", "mes")
+
+
+def movido(e: dict) -> bool:
+    return e.get("tipo") == "arquivo" and e["fonte"]["arquivo"].startswith(MOVIDOS)
 
 
 def normalizar(e: dict) -> dict:
@@ -65,9 +81,12 @@ class RegressaoSetembro(unittest.TestCase):
     def test_eventos_identicos_a_tag(self):
         tag = [normalizar(e) for e in ler_eventos(TAG_DIR / "relatorio" / "eventos.jsonl")]
         agora = [normalizar(e) for e in self.r.eventos if not evento_novo(e)]
+        self.assertEqual([e for e in agora if movido(e)], [e for e in tag if movido(e)])
+        tag = [e for e in tag if not movido(e)]
+        agora = [e for e in agora if not movido(e)]
         self.assertEqual(len(agora), len(tag))
         for i, (a, t) in enumerate(zip(agora, tag)):
-            self.assertEqual(a, t, f"evento {i + 1} da tag")
+            self.assertEqual(a, t, f"evento {i + 1} da tag, sem os movidos")
 
     def test_resumo_identico_a_tag(self):
         with open(TAG_DIR / "relatorio" / "execucao.json", encoding="utf-8") as fh:
