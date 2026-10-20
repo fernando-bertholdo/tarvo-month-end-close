@@ -217,6 +217,9 @@ html[data-projecao] .dinheiro-grade { grid-template-columns: repeat(auto-fit, mi
 .dinheiro-col .o-que { font-size: var(--tam-tabela); color: var(--cor-texto-2); line-height: 1.35; }
 .dinheiro-col .sub { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 0 8px; font-size: var(--tam-cartao); font-weight: 600; line-height: 1.3; color: var(--cor-texto-2); }
 .dinheiro-col .sub .alvo { font-weight: 600; color: var(--cor-tinta); font-variant-numeric: var(--numeros); white-space: nowrap; }
+/* the two parts of the rate above the contract share one arrangement (finding 1, r4): side by side when
+   both fit their column, else both stacked, label over value (alinharDinheiro, measured) */
+.dinheiro-col.empilha .sub { flex-direction: column; align-items: flex-start; }
 .aviso-soma { margin-top: 14px; }
 /* running text is 17 px (STYLE.md, "Texto corrido"), not meta (finding 8, r2) */
 .corrido { font-size: var(--tam-texto); font-weight: 500; line-height: 1.5; color: var(--cor-texto-2); }
@@ -291,31 +294,43 @@ html[data-projecao] .dinheiro-grade { grid-template-columns: repeat(auto-fit, mi
 .secao-titulo h2 { font-size: var(--tam-cartao); font-weight: 600; line-height: 1.25; }
 
 /* origin strip under the divergence table (r4): four links read left to right, the last one in focus by
-   size and surface; the connector is drawn in vector (the embedded font has no arrow glyph) */
+   size and surface; the connector is drawn in vector (the embedded font has no arrow glyph).
+   r5 (defect 02, Critic r4): in every link the label is on top and the value under it, and the four
+   values share one baseline. The strip is a grid of three rows (label, value, what follows the value)
+   and each link takes them as a subgrid, so a label that wraps moves every value down together. */
 .faixa-origem { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
 .faixa-titulo { font-size: var(--tam-tabela); font-weight: 600; line-height: 1.3; color: var(--cor-tinta); }
 .faixa {
   appearance: none; width: 100%; margin: 0; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer;
-  display: grid; grid-template-columns: minmax(0, 1fr) 24px minmax(0, 1fr) 24px minmax(0, 1.1fr) 24px minmax(0, 1.4fr);
-  align-items: stretch; gap: 0 4px; border-radius: var(--raio-cartao);
+  display: grid; grid-template-columns: auto 24px auto 24px auto 24px auto;
+  grid-template-rows: auto auto auto; align-items: stretch; gap: 0 4px; border-radius: var(--raio-cartao);
 }
 .elo-caixa {
-  display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 4px; min-width: 0;
+  grid-row: 1 / span 3; display: grid; grid-template-rows: subgrid; row-gap: 4px; justify-items: start; min-width: 0;
   padding: 12px 14px; border: 1px solid var(--cor-borda); border-radius: var(--raio-cartao); background: var(--cor-superficie);
   transition: border-color var(--dur-micro), background-color var(--dur-micro);
 }
 .faixa:hover .elo-caixa { border-color: color-mix(in srgb, var(--cor-texto-2) 40%, var(--cor-borda)); }
 .elo-caixa.destaque { background: var(--cor-superficie-2); }
-.elo-rot { font-size: var(--tam-meta); font-weight: 600; line-height: 1.3; color: var(--cor-texto-2); }
+.elo-rot { grid-row: 1; align-self: end; font-size: var(--tam-meta); font-weight: 600; line-height: 1.3; color: var(--cor-texto-2); }
+/* the value cell clips at its left edge: a separator that would open a line (1280) is cut, the value
+   it leads starts the line; on one line the separator shows between the two values (finding 10) */
+.elo-valor { grid-row: 2; align-self: baseline; min-width: 0; overflow-x: clip; }
+.elo-linha { --sep: var(--tam-cartao); display: flex; flex-wrap: wrap; align-items: baseline; margin-left: calc(-1 * var(--sep)); }
+.elo-linha > * { padding-left: var(--sep); }
+.elo-linha.pilha { flex-direction: column; align-items: flex-start; } /* "0,50 ponto" right under the value it qualifies */
+.elo-depois { grid-row: 3; align-self: start; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
 .elo-num { display: inline-flex; align-items: center; gap: 4px; font-size: var(--tam-cartao); font-weight: 700; line-height: 1.15; font-variant-numeric: var(--numeros); white-space: nowrap; }
 .elo-caixa.critico .elo-num { color: var(--cor-critico); }
-.elo-caixa.critico .elo-num .ic { width: 18px; height: 18px; }
+.elo-caixa.critico .elo-num { align-items: baseline; } /* the figure gives the baseline, not the icon */
+.elo-caixa.critico .elo-num .ic { width: 18px; height: 18px; align-self: center; }
 .elo-total { font-size: var(--tam-titulo); font-weight: 700; line-height: 1.1; letter-spacing: -0.01em; font-variant-numeric: var(--numeros); white-space: nowrap; }
 .elo-total .moeda { font-size: .6em; }
-.elo-desc { font-size: var(--tam-tabela); font-weight: 500; line-height: 1.3; color: var(--cor-texto-2); }
+.elo-junto { white-space: nowrap; }
+.elo-junto .sep { display: inline-block; width: var(--sep); margin-left: calc(-1 * var(--sep)); text-align: center; color: var(--cor-texto-2); font-size: var(--tam-cartao); font-weight: 600; }
 .elo-sub { font-size: var(--tam-meta); font-weight: 600; line-height: 1.3; color: var(--cor-texto-2); }
 .elo-caixa .selo { margin-top: 2px; }
-.elo-conector { display: flex; align-items: center; justify-content: center; color: var(--cor-texto-2); }
+.elo-conector { grid-row: 1 / span 3; display: flex; align-items: center; justify-content: center; color: var(--cor-texto-2); }
 .elo-conector svg { width: 24px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
 
 .rotina-lista { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 8px 16px; margin-top: 10px; }
@@ -1222,14 +1237,17 @@ html[data-projecao] .mesa-motivo { min-height: 64px; }
         }
         break;
       case "varre":
-        decisao(S, e); focarEvento(S, e, "ok"); m.modo = "varre"; break;
+        decisao(S, e); focarEvento(S, e, "ok"); m.modo = "varre";
+        if (b.lote) m.motivo = linhaLote(); // the sweep after a line about one row (defect 03, r4)
+        break;
       case "foco":
         // the gaze goes back to the item's file and row before the item is written (finding 1, r3)
         mesaFonte(S, b.fonte); olharEm(S, b.idx, null); break;
       case "lote":
         decisao(S, e);
-        // inside a group of pending items the routine only counts: the group's line stays
-        if (!b.quieto && m.modo !== "lote") { m.modo = "lote"; m.olhar = -1; m.motivo = { tipo: "lote", texto: "Rotina em lote: feito pela regra." }; }
+        // inside a group of pending items the routine only counts: the group's line stays; a batch that
+        // follows a sweep already showing the batch line keeps it (no second entry of the same line)
+        if (!b.quieto && m.modo !== "lote") { m.modo = "lote"; m.olhar = -1; if (!m.motivo || m.motivo.tipo !== "lote") m.motivo = linhaLote(); }
         if (e.frente === "EXTRATOS") mesaFonte(S, infoArquivo(e.fonte.arquivo).fonte);
         break;
       case "div1":
@@ -1329,6 +1347,8 @@ html[data-projecao] .mesa-motivo { min-height: 64px; }
     return { tipo: "critico", selo: "Sinalizada", texto: limparMotivo(e.motivo) };
   }
   var SELO_SINAL = { CONFERIR_REPASSE: "Conferir o repasse" };
+  // What the engine writes while the routine runs in batch (the text of every stage).
+  function linhaLote() { return { tipo: "lote", texto: "Rotina em lote: feito pela regra." }; }
   function narracaoFechando() { return { tipo: "etapa", texto: "Fechando a comissão de cada lojista.", sub: "Só entra no painel o que fechou." }; }
   function narracaoRecap(n) { return { tipo: "etapa", texto: finito(n) ? plural(n, "decisão para uma pessoa.", "decisões para pessoas.") : "Decisões para pessoas.", sub: "Cada uma com motivo, valor e quem decide." }; }
   function palavrasNarracao(n) {
@@ -1353,7 +1373,7 @@ html[data-projecao] .mesa-motivo { min-height: 64px; }
     function narrado(b, n) {
       var f = rnd ? 1 + rnd() * 0.08 : 1; // seeded variation, never shorter than the rule
       b.muda = true; b.palavras = palavrasNarracao(n); b.fator = f; b.req = Math.round((ENTRADA + pausa(b.palavras)) * f);
-      ctx.modo = "narra"; return b;
+      ctx.modo = "narra"; ctx.ultimaLinha = b.k; return b;
     }
     function jit(ms) { return rnd ? Math.round(ms * (1 + rnd() * 0.08)) : ms; }
     if (e.tipo === "inicio") { out.push({ k: "inicio", dur: 400, ev: e }); return out; }
@@ -1406,7 +1426,16 @@ html[data-projecao] .mesa-motivo { min-height: 64px; }
       return out;
     }
     if (e.peso === "rotina") {
-      if (ctx.varridas < SWEEP) { ctx.varridas++; ctx.modo = "varre"; out.push({ k: "varre", dur: 400, ev: e }); return out; }
+      if (ctx.varridas < SWEEP) {
+        ctx.varridas++;
+        var bv = { k: "varre", dur: 400, ev: e };
+        // A sweep right after a line about one row (the notes stage, where the Casa do Estudante comes
+        // first) would leave that line on the desk while the gaze stamps other rows. In the beat the sweep
+        // starts, the line becomes the batch line of the other stages (defect 03, r4). Only the text
+        // changes: the beat keeps its duration and the line's pause still ends before the sweep.
+        if (ctx.modo === "narra" && !ctx.grupoAberto && LINHA_DE_UMA_LINHA[ctx.ultimaLinha]) { bv.muda = true; bv.lote = true; }
+        ctx.modo = "varre"; out.push(bv); return out;
+      }
       var base = orc && orc.base[et] ? orc.base[et] : 0, k = ctx.lote++;
       var bl = { k: "lote", dur: base / (1 + k / 20), ev: e };
       if (ctx.grupoAberto) bl.quieto = true;
@@ -1687,6 +1716,21 @@ html[data-projecao] .mesa-motivo { min-height: 64px; }
       h("p", { "class": "meta" }, "Dados fictícios do case. O motor decide por regra; a IA não toca em valor." +
         (finito(r.lancamentos) && porMetodo.REGRA === r.lancamentos ? " Em " + mesRef() + ", os " + inteiro(r.lancamentos) + " lançamentos dos extratos saíram por regra." : "")),
       h("button", { "class": "botao", type: "button", id: "b-tema", onclick: alternarTema }, temaAtualEscuro() ? "Tema claro" : "Tema escuro")));
+    alinharDinheiro();
+  }
+  // Layout, measured: if one part of the rate above the contract wraps its value under its label, both
+  // parts stack, so the two values never sit one at the right and the other at the left (finding 1, r4).
+  function alinharDinheiro() {
+    Array.prototype.forEach.call(doc.querySelectorAll(".dinheiro-col"), function (col) {
+      var subs = col.querySelectorAll(".sub");
+      col.classList.remove("empilha");
+      var quebra = Array.prototype.some.call(subs, function (s) {
+        var v = s.querySelector(".alvo"); if (!v) return false;
+        var a = s.getBoundingClientRect(), b = v.getBoundingClientRect();
+        return b.height > 0 && b.top - a.top > b.height / 2;
+      });
+      col.classList.toggle("empilha", quebra);
+    });
   }
 
   // The month's commission and each front's, with its merchants: `resumo` once the close ends; the
@@ -1756,16 +1800,25 @@ html[data-projecao] .mesa-motivo { min-height: 64px; }
     var operacoes = finito(n) ? plural(n, "operação", "operações") : "";
     var rotulo = "Origem da " + nome + ": contrato " + pctMotor(ex.taxa_contratada_pct) + "; " + cobrou.toLowerCase() + " " + pctMotor(ex.taxa_aplicada_pct) +
       "; " + brl(ex.valor) + " " + nesta + ", " + ponto + "; " + operacoes + ", " + brl(p.valor) + " " + oQue + ". Decide: " + p.dono + ". Ver a origem";
-    function elo(cls) { var s = h("span", { "class": "elo-caixa" + (cls ? " " + cls : "") }); for (var i = 1; i < arguments.length; i++) anexar(s, arguments[i]); return s; }
+    // Every link: the label on top, the value under it, then what follows the value (defect 02, r4). The
+    // label of a link that used to follow its value starts with a capital, as the other labels do.
+    function elo(cls, rot, val, depois, pilha) {
+      return h("span", { "class": "elo-caixa" + (cls ? " " + cls : "") },
+        h("span", { "class": "elo-rot" }, rot), h("span", { "class": "elo-valor" }, h("span", { "class": "elo-linha" + (pilha ? " pilha" : "") }, val)),
+        depois ? h("span", { "class": "elo-depois" }, depois) : null);
+    }
     var botao = h("button", { "class": "faixa", type: "button", "aria-label": rotulo, "data-linha": "grupo:" + g.chave,
         onclick: function (ev) { abrirMergulho("grupo", g.chave, ev.currentTarget); } },
-      elo(null, h("span", { "class": "elo-rot" }, "Contrato"), h("span", { "class": "elo-num" }, pctMotor(ex.taxa_contratada_pct))),
+      elo(null, "Contrato", h("span", { "class": "elo-num" }, pctMotor(ex.taxa_contratada_pct))),
       conector(),
-      elo("critico", h("span", { "class": "elo-rot" }, cobrou), h("span", { "class": "elo-num" }, icone("alerta"), pctMotor(ex.taxa_aplicada_pct))),
+      elo("critico", cobrou, h("span", { "class": "elo-num" }, icone("alerta"), pctMotor(ex.taxa_aplicada_pct))),
       conector(),
-      elo(null, h("span", { "class": "elo-num" }, h("span", { "class": "inteiro" }, brl(ex.valor))), h("span", { "class": "elo-desc" }, nesta), h("span", { "class": "elo-sub" }, ponto)),
+      elo(null, maiuscula(nesta), [h("span", { "class": "elo-num" }, h("span", { "class": "inteiro" }, brl(ex.valor))), h("span", { "class": "elo-sub" }, ponto)], null, true),
       conector(),
-      elo("destaque", h("span", { "class": "elo-rot" }, operacoes), dinheiro(p.valor, "elo-total"), h("span", { "class": "elo-desc" }, oQue), seloDono(p.dono)));
+      // the operations, in ink at the size of the other values, on the line of the total or right before it
+      elo("destaque", maiuscula(oQue), [operacoes ? h("span", { "class": "elo-num elo-ops" }, operacoes) : null,
+        h("span", { "class": "elo-junto" }, operacoes ? h("span", { "class": "sep", "aria-hidden": "true" }, "·") : null, dinheiro(p.valor, "elo-total"))],
+        seloDono(p.dono)));
     return h("div", { "class": "faixa-origem" }, h("h3", { "class": "faixa-titulo" }, "Origem · " + nome), botao);
   }
   // The connector between two links: a short line with a chevron, drawn in vector (no glyph).
@@ -1840,10 +1893,11 @@ html[data-projecao] .mesa-motivo { min-height: 64px; }
     if (!lista.length) ul.appendChild(h("li", { "class": "pend-vazio" }, "Nenhuma pendência para esta área."));
     alinharPendencias();
   }
-  // A title that wraps breaks before the name after "·", never inside it ("Spread negativo · / Ponte Aérea").
+  // A title that wraps breaks before the "·", never inside the name after it, and the "·" goes down with
+  // the name ("Spread negativo / · Ponte Aérea"): it never hangs at the end of the first line (finding 10, r4).
   function tituloEmPartes(t) {
     var i = String(t).indexOf(" · ");
-    return i < 0 ? t : [t.slice(0, i + 2), " ", h("span", { "class": "junto" }, t.slice(i + 3))];
+    return i < 0 ? t : [t.slice(0, i), " ", h("span", { "class": "junto" }, "· " + t.slice(i + 3))];
   }
   // The seal column of the pending list has the width of its widest seal (layout, measured).
   function alinharPendencias() {
@@ -2355,7 +2409,7 @@ html[data-projecao] .mesa-motivo { min-height: 64px; }
     if (AO_VIVO) { $("acoes-resumo").hidden = false; }
     escreverEstado(estadoFechado(), false);
     zerarContadores();
-    alinharPendencias();
+    alinharPendencias(); alinharDinheiro();
     window.scrollTo(0, 0);
   }
   function pularParaPessoa() {
@@ -2922,7 +2976,7 @@ html[data-projecao] .mesa-motivo { min-height: 64px; }
     $("b-projecao").setAttribute("aria-pressed", String(on));
     medirTopo();
     cacheColunas = {};
-    alinharPendencias();
+    alinharPendencias(); alinharDinheiro();
     if (!$("v-rep").hidden && S) { vistaChaveMesa = ""; desenharRep(false); }
   }
 
@@ -2952,8 +3006,8 @@ html[data-projecao] .mesa-motivo { min-height: 64px; }
     $("b-rodar").addEventListener("click", rodarAoVivo);
     $("b-projecao").addEventListener("click", alternarProjecao);
     if (root.hasAttribute("data-projecao")) $("b-projecao").setAttribute("aria-pressed", "true");
-    window.addEventListener("resize", function () { medirTopo(); alinharPendencias(); if (!$("v-rep").hidden && S) { vistaChaveMesa = ""; desenharRep(false); } });
-    if (doc.fonts && doc.fonts.ready) doc.fonts.ready.then(function () { cacheColunas = {}; alinharPendencias(); if (!$("v-rep").hidden && S) { vistaChaveMesa = ""; desenharRep(false); } });
+    window.addEventListener("resize", function () { medirTopo(); alinharPendencias(); alinharDinheiro(); if (!$("v-rep").hidden && S) { vistaChaveMesa = ""; desenharRep(false); } });
+    if (doc.fonts && doc.fonts.ready) doc.fonts.ready.then(function () { cacheColunas = {}; alinharPendencias(); alinharDinheiro(); if (!$("v-rep").hidden && S) { vistaChaveMesa = ""; desenharRep(false); } });
 
     if (AO_VIVO && !EVENTOS.length) { prepararAoVivo(); }
     else {
