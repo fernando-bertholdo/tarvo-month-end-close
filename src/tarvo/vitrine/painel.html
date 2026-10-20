@@ -1893,10 +1893,11 @@ html[data-projecao] .mesa-motivo { min-height: 64px; }
     if (!lista.length) ul.appendChild(h("li", { "class": "pend-vazio" }, "Nenhuma pendência para esta área."));
     alinharPendencias();
   }
-  // A title that wraps breaks before the name after "·", never inside it ("Spread negativo · / Ponte Aérea").
+  // A title that wraps breaks before the "·", never inside the name after it, and the "·" goes down with
+  // the name ("Spread negativo / · Ponte Aérea"): it never hangs at the end of the first line (finding 10, r4).
   function tituloEmPartes(t) {
     var i = String(t).indexOf(" · ");
-    return i < 0 ? t : [t.slice(0, i + 2), " ", h("span", { "class": "junto" }, t.slice(i + 3))];
+    return i < 0 ? t : [t.slice(0, i), " ", h("span", { "class": "junto" }, "· " + t.slice(i + 3))];
   }
   // The seal column of the pending list has the width of its widest seal (layout, measured).
   function alinharPendencias() {
