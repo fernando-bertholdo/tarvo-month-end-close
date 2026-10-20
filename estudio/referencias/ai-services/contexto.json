@@ -1,0 +1,61 @@
+{
+  "url": "https://www.barte.com/ai-services",
+  "gravado_em_utc": "2026-10-18T22:35:18.017Z",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "marcas": [
+    {
+      "rotulo": "goto",
+      "t_ms": 300
+    },
+    {
+      "rotulo": "load",
+      "t_ms": 2585
+    },
+    {
+      "rotulo": "clique-Provisão",
+      "t_ms": 18694
+    },
+    {
+      "rotulo": "clique-Receita",
+      "t_ms": 35020
+    },
+    {
+      "rotulo": "fim",
+      "t_ms": 50054
+    }
+  ],
+  "caixa_cena": {
+    "x": 842,
+    "y": 146,
+    "w": 492,
+    "h": 596
+  },
+  "caixa_passos": {
+    "x": 866,
+    "y": 325,
+    "w": 443,
+    "h": 375
+  },
+  "trocas_de_classe": [],
+  "nav_start_vs_t0_ms": 1792362918332,
+  "palavras_por_cenario": [
+    {
+      "scn": "cash",
+      "texto": "01 Aprende ExtratoERPDiferença ≤ R$ 250 → baixa automática 02 Executa Acme Logística−R$ 190baixado 03 Melhora Agora também ≤ 5% do frete 04 Escala Byte Alimentos−R$ 2.475 CAprovar a baixa?",
+      "palavras": 30
+    },
+    {
+      "scn": "accr",
+      "texto": "01 Aprende RazãoContratosSem nota até o dia 2 → provisiona 02 Executa Osprey MídiaR$ 60.000provisionado 03 Melhora Recorrente → provisão automática 04 Escala NovaTechR$ 240.000 CProvisionar pelo contrato?",
+      "palavras": 28
+    },
+    {
+      "scn": "rev",
+      "texto": "01 Aprende Contratos Notas Reconhecer pro rata em 12 meses 02 Executa Northwind R$ 50k/mês RÉGUA ATIVA 03 Melhora Ajustes ≤ R$ 50k → fatura automática 04 Escala Vantiv +R$ 47.000 C Faturar o excedente?",
+      "palavras": 35
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+node_modules/
+out/
+ferramentas/ms-playwright/
+# heavy or third-party, kept out of the repository: renders, captures and tool installs
+reviews/frames/
+reviews/contact-sheets/
+referencias/*/gravacao.webm
+referencias/*/quadros/
+filme/.agents/
+filme/.claude/
+filme/skills-lock.json

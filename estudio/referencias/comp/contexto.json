@@ -1,0 +1,245 @@
+{
+  "url": "https://mktbarte.github.io/cases/case-comp.html",
+  "gravado_em_utc": "2026-10-18T22:41:40.910Z",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "marcas": [
+    {
+      "rotulo": "goto",
+      "t_ms": 6
+    },
+    {
+      "rotulo": "ato-1",
+      "t_ms": 5637
+    },
+    {
+      "rotulo": "rola-ato-2",
+      "t_ms": 10140
+    },
+    {
+      "rotulo": "ato-2",
+      "t_ms": 14148
+    },
+    {
+      "rotulo": "rola-ato-3",
+      "t_ms": 18651
+    },
+    {
+      "rotulo": "ato-3",
+      "t_ms": 22660
+    },
+    {
+      "rotulo": "rola-ato-4",
+      "t_ms": 27163
+    },
+    {
+      "rotulo": "ato-4",
+      "t_ms": 31174
+    },
+    {
+      "rotulo": "fim",
+      "t_ms": 38175
+    }
+  ],
+  "nota": "O case Comp é servido em barte.com/cases/comp por um iframe que aponta para esta URL.",
+  "trilho": {
+    "top": 6719.09375,
+    "curso": 3420
+  },
+  "caixa_compo": {
+    "x": 140,
+    "y": 100,
+    "w": 1160,
+    "h": 540
+  },
+  "caixa_palco": {
+    "x": 0,
+    "y": 0,
+    "w": 1440,
+    "h": 900
+  },
+  "transicoes_declaradas": [
+    {
+      "sel": "#palco .agrupo",
+      "prop": "opacity, transform",
+      "duracao": "0.7s, 0.85s",
+      "curva": "cubic-bezier(0.2, 0.8, 0.2, 1), cubic-bezier(0.2, 0.8, 0.2, 1)",
+      "atraso": "0s",
+      "ad": "0.00s",
+      "ld": "",
+      "texto": "ca-cs cartão de crédito"
+    },
+    {
+      "sel": "#palco .agrupo",
+      "prop": "opacity, transform",
+      "duracao": "0.7s, 0.85s",
+      "curva": "cubic-bezier(0.2, 0.8, 0.2, 1), cubic-bezier(0.2, 0.8, 0.2, 1)",
+      "atraso": "0.12s",
+      "ad": "0.12s",
+      "ld": "",
+      "texto": "Conciliador conciliação bancária"
+    },
+    {
+      "sel": "#palco .agrupo",
+      "prop": "opacity, transform",
+      "duracao": "0.7s, 0.85s",
+      "curva": "cubic-bezier(0.2, 0.8, 0.2, 1), cubic-bezier(0.2, 0.8, 0.2, 1)",
+      "atraso": "0.24s",
+      "ad": "0.24s",
+      "ld": "",
+      "texto": "Ângela cobrança e contratos"
+    },
+    {
+      "sel": "#palco .agrupo",
+      "prop": "opacity, transform",
+      "duracao": "0.7s, 0.85s",
+      "curva": "cubic-bezier(0.2, 0.8, 0.2, 1), cubic-bezier(0.2, 0.8, 0.2, 1)",
+      "atraso": "0.36s",
+      "ad": "0.36s",
+      "ld": "",
+      "texto": "Oscar pagamentos · comp"
+    },
+    {
+      "sel": "#palco .orq",
+      "prop": "opacity, transform",
+      "duracao": "0.6s, 0.75s",
+      "curva": "cubic-bezier(0.2, 0.8, 0.2, 1), cubic-bezier(0.2, 0.8, 0.2, 1)",
+      "atraso": "0s, 0s",
+      "ad": "",
+      "ld": "",
+      "texto": "Orquestrador consolida e publica"
+    },
+    {
+      "sel": "#palco .painelx",
+      "prop": "opacity, transform",
+      "duracao": "0.7s, 0.85s",
+      "curva": "cubic-bezier(0.2, 0.8, 0.2, 1), cubic-bezier(0.2, 0.8, 0.2, 1)",
+      "atraso": "0s, 0s",
+      "ad": "",
+      "ld": "",
+      "texto": "P&L · FECHAMENTO DO MÊS ao vivo A B C D 1 2 3 4 5 6 7 8 9 CONTA AGO SET Δ"
+    },
+    {
+      "sel": "#palco .linha-pnl",
+      "prop": "opacity, transform",
+      "duracao": "0.5s, 0.6s",
+      "curva": "cubic-bezier(0.2, 0.8, 0.2, 1), cubic-bezier(0.2, 0.8, 0.2, 1)",
+      "atraso": "0s",
+      "ad": "",
+      "ld": "0.00s",
+      "texto": "Receita"
+    },
+    {
+      "sel": "#palco .linha-pnl",
+      "prop": "opacity, transform",
+      "duracao": "0.5s, 0.6s",
+      "curva": "cubic-bezier(0.2, 0.8, 0.2, 1), cubic-bezier(0.2, 0.8, 0.2, 1)",
+      "atraso": "0.16s",
+      "ad": "",
+      "ld": "0.16s",
+      "texto": "Impostos sobre receita"
+    },
+    {
+      "sel": "#palco .linha-pnl",
+      "prop": "opacity, transform",
+      "duracao": "0.5s, 0.6s",
+      "curva": "cubic-bezier(0.2, 0.8, 0.2, 1), cubic-bezier(0.2, 0.8, 0.2, 1)",
+      "atraso": "0.32s",
+      "ad": "",
+      "ld": "0.32s",
+      "texto": "Custo direto"
+    },
+    {
+      "sel": "#palco .linha-pnl",
+      "prop": "opacity, transform",
+      "duracao": "0.5s, 0.6s",
+      "curva": "cubic-bezier(0.2, 0.8, 0.2, 1), cubic-bezier(0.2, 0.8, 0.2, 1)",
+      "atraso": "0.48s",
+      "ad": "",
+      "ld": "0.48s",
+      "texto": "Margem bruta"
+    },
+    {
+      "sel": "#palco .linha-pnl",
+      "prop": "opacity, transform",
+      "duracao": "0.5s, 0.6s",
+      "curva": "cubic-bezier(0.2, 0.8, 0.2, 1), cubic-bezier(0.2, 0.8, 0.2, 1)",
+      "atraso": "0.64s",
+      "ad": "",
+      "ld": "0.64s",
+      "texto": "Pessoas"
+    },
+    {
+      "sel": "#palco .linha-pnl",
+      "prop": "opacity, transform",
+      "duracao": "0.5s, 0.6s",
+      "curva": "cubic-bezier(0.2, 0.8, 0.2, 1), cubic-bezier(0.2, 0.8, 0.2, 1)",
+      "atraso": "0.8s",
+      "ad": "",
+      "ld": "0.80s",
+      "texto": "G&A"
+    },
+    {
+      "sel": "#palco .linha-pnl",
+      "prop": "opacity, transform",
+      "duracao": "0.5s, 0.6s",
+      "curva": "cubic-bezier(0.2, 0.8, 0.2, 1), cubic-bezier(0.2, 0.8, 0.2, 1)",
+      "atraso": "0.96s",
+      "ad": "",
+      "ld": "0.96s",
+      "texto": "Growth"
+    },
+    {
+      "sel": "#palco .fecho",
+      "prop": "opacity, transform",
+      "duracao": "0.6s, 0.6s",
+      "curva": "cubic-bezier(0.2, 0.8, 0.2, 1), cubic-bezier(0.2, 0.8, 0.2, 1)",
+      "atraso": "1.3s, 1.3s",
+      "ad": "",
+      "ld": "",
+      "texto": "Resultado"
+    },
+    {
+      "sel": "#palco .passo",
+      "prop": "opacity",
+      "duracao": "0.5s",
+      "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+      "atraso": "0s",
+      "ad": "",
+      "ld": "",
+      "texto": "Quatro agentes trabalhando em paralelo, o dia inteiro."
+    },
+    {
+      "sel": "#palco .passo",
+      "prop": "opacity",
+      "duracao": "0.5s",
+      "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+      "atraso": "0s",
+      "ad": "",
+      "ld": "",
+      "texto": "Um orquestrador reúne o que cada um produziu."
+    },
+    {
+      "sel": "#palco .passo",
+      "prop": "opacity",
+      "duracao": "0.5s",
+      "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+      "atraso": "0s",
+      "ad": "",
+      "ld": "",
+      "texto": "Tudo desemboca na mesma base de dados."
+    },
+    {
+      "sel": "#palco .passo",
+      "prop": "opacity",
+      "duracao": "0.5s",
+      "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+      "atraso": "0s",
+      "ad": "",
+      "ld": "",
+      "texto": "O resultado do mês se monta linha a linha, em tempo real."
+    }
+  ]
+}

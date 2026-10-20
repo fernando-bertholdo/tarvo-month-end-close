@@ -68,6 +68,6 @@ Evento `fim` traz `resumo`, o escopo do mês: `comissao_checkout`, `comissao_rem
 ## Interfaces Python
 
 - Motor: `src/tarvo/engine.py`, `run_close(month_dir, out_dir="saida", report_dir="relatorio", emit=None) -> dict`. `emit(evento: dict)` é chamado para cada evento quando a etapa dele termina (ver `parcial`); o motor também grava o arquivo.
-- Painel: `src/tarvo/painel.py`, `build_panel(events: list[dict], dest: Path) -> Path`. Lê o modelo `src/tarvo/vitrine/painel.html` e grava `relatorio/painel.html` com os eventos embutidos.
+- Painel: `src/tarvo/painel.py`, `build_panel(events: list[dict], dest: Path, month_dir=None, out_dir=None) -> Path`. Lê o modelo `src/tarvo/vitrine/painel.html` e grava `relatorio/painel.html` com os eventos embutidos e, para o mergulho, as linhas de origem da pasta do mês e as saídas de `out_dir` (só se batem com os eventos). O `run_close` passa as duas pastas da rodada.
 - Servidor: `python3 -m src.tarvo.servidor dados [--porta 8765] [--vitrine padrao|refinada]`.
 - De qualquer pasta: `python3 <repo>/src/tarvo dados` e `python3 <repo>/src/tarvo/servidor.py dados`; os caminhos são relativos à pasta onde se digita.
