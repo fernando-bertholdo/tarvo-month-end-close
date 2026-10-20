@@ -297,6 +297,8 @@ class Close:
             for row in book.get("ANTIGO 2025 - nao usar", [])[1:]:
                 if row.get("A"):
                     self.old_cnpj[norm(row["A"])] = cnpj14(row.get("B"))
+            if "Taxas vigentes" in book and not self.contracts:
+                self.warn(f"{f02.name}: nenhum contrato lido da aba 'Taxas vigentes'; checkout e divergências de spread bloqueados (F71).")
         else:
             self.warn("Arquivo 02 (taxas) ausente: checkout e divergências de spread bloqueados; a comissão de remessa sai do spread realizado (F71).")
         self.ponte = []
@@ -438,7 +440,7 @@ class Close:
             for r in self.orbe:
                 if not r.get("_dup"):  # a repeat is its own pendência (F76), out of the file's gross
                     by_file.setdefault(r["_arquivo"], []).append(r)
-            why = "linhas da Orbe sem a planilha de taxas (02): checkout fora do cálculo até a planilha chegar; rodar o fechamento de novo (F71). Valor = bruto transacionado"
+            why = "linhas da Orbe sem taxa contratada (planilha 02 ausente ou sem contrato): checkout fora do cálculo até a planilha chegar; rodar o fechamento de novo (F71). Valor = bruto transacionado"
             self.orbe_blocked = [(f, rows, why) for f, rows in by_file.items()] + self.orbe_blocked
         for arq, rows, why in self.orbe_blocked:
             vals = [(r["id_transacao"], dec_br(r["valor_bruto"])) for r in rows]

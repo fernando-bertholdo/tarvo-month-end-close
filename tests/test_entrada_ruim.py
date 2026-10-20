@@ -61,6 +61,22 @@ class LinhaRuim(unittest.TestCase):
         self.assertIn("01_orbe_relatorio_comissoes_set2026.csv", lidos)
 
 
+class PlanilhaSemContrato(unittest.TestCase):
+    def test_avisa_quando_a_planilha_nao_traz_contrato(self):
+        r = Rodada()
+        self.addCleanup(r.fechar)
+        dados02 = next(r.mes.glob("02_*")).read_bytes()
+        original = engine.read_xlsx
+
+        def so_cabecalho(data):
+            return {"Taxas vigentes": [{"_row": "6", "A": "Lojista"}]} if data == dados02 else original(data)
+
+        with mock.patch.object(engine, "read_xlsx", side_effect=so_cabecalho):
+            r.rodar()
+        avisos = [a for a in r.run["avisos"] if "02" in a and "nenhum contrato" in a]
+        self.assertEqual(len(avisos), 1, r.run["avisos"])
+
+
 class AjusteRepetidoSemPlanilha(unittest.TestCase):
     """06 repeats a 01 id and the 02 is missing: the repeat still becomes its own pendência (F76)."""
 
