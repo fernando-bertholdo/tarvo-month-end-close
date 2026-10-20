@@ -357,11 +357,13 @@ class Close:
                 diff = r2(bruto * (aplicada - contr_pct) / 100)
                 did = self.new_id("DIV")
                 causa = "estorno de venda com taxa errada" if tipo == "ESTORNO" else "taxa aplicada diferente do contrato"
-                self.divergencias.append([did, c["cnpj"], "CHECKOUT", ref, f"{contr_pct:.2f}", f"{aplicada:.2f}", fmt(diff), causa, c["nome"]])
+                # base_brl: what the rate difference applies to (F11: the gross of the line)
+                self.divergencias.append([did, c["cnpj"], "CHECKOUT", ref, f"{contr_pct:.2f}", f"{aplicada:.2f}", fmt(diff), causa, c["nome"], fmt(bruto)])
                 self.rastro.append([did, arq, ref, fmt(diff), "F11: bruto x (aplicada - contratada)"])
                 div_by_merchant[c["cnpj"]].append((ref, diff, arq, c["nome"], r2(taxa_orbe - com)))
                 self.dec("CHECKOUT", arq, ref, "F11/F36/F63", "divergencia", diff,
-                         f"Orbe aplicou {aplicada:.2f}% e o contrato é {contr_pct:.2f}%", peso="atencao", id_saida=did)
+                         f"Orbe aplicou {aplicada:.2f}% e o contrato é {contr_pct:.2f}%", peso="atencao", id_saida=did,
+                         base=bruto)
         # commission per merchant (F1, F30)
         self.com_checkout = {}
         for cnpj, d in per.items():
@@ -435,11 +437,13 @@ class Close:
             self.dec("REMESSA", arq, op, "F12/F13", "comissao", com, f"50% do spread realizado R$ {p['spread']}", peso="rotina")
             if p["spread_pct"] - contr > SPREAD_TOL:  # F14, F15, F63
                 diff = r2(p["spread"] - contract_spread)  # F95: Spread R$ realizado as the base
+                base = r2(p["me"] * p["ptax"])  # F15: the spread applies to Valor ME x PTAX, not to Valor R$
                 did = self.new_id("DIV")
-                self.divergencias.append([did, p["cnpj"], "REMESSA", op, f"{contr * 100:.2f}", f"{p['spread_pct'] * 100:.4f}", fmt(diff), "spread acima do contratado", nome])
+                self.divergencias.append([did, p["cnpj"], "REMESSA", op, f"{contr * 100:.2f}", f"{p['spread_pct'] * 100:.4f}", fmt(diff), "spread acima do contratado", nome, fmt(base)])
                 self.rastro.append([did, arq, op, fmt(diff), "F15/F95: Spread R$ - Valor ME x PTAX x spread contratado"])
                 div_ponte.append((op, diff, nome))
-                self.dec("REMESSA", arq, op, "F14/F15", "divergencia", diff, f"Ponte aplicou {p['spread_pct'] * 100:.2f}% e o contrato é {contr * 100:.2f}%", peso="atencao", id_saida=did)
+                self.dec("REMESSA", arq, op, "F14/F15", "divergencia", diff, f"Ponte aplicou {p['spread_pct'] * 100:.2f}% e o contrato é {contr * 100:.2f}%", peso="atencao", id_saida=did,
+                         base=base)
         self.com_remessa = {}
         for cnpj, d in per.items():
             cid = self.new_id("COM")
@@ -606,7 +610,7 @@ class Close:
         self.rep.mkdir(parents=True, exist_ok=True)
         files = {
             "comissoes_por_lojista.csv": (["id_saida", "cnpj", "lojista", "linha_negocio", "comissao_brl"], self.comissoes),
-            "divergencias_taxa.csv": (["id_saida", "cnpj", "linha_negocio", "ref_origem", "taxa_contratada_pct", "taxa_aplicada_pct", "diferenca_brl", "causa_divergencia", "lojista"], self.divergencias),
+            "divergencias_taxa.csv": (["id_saida", "cnpj", "linha_negocio", "ref_origem", "taxa_contratada_pct", "taxa_aplicada_pct", "diferenca_brl", "causa_divergencia", "lojista", "base_brl"], self.divergencias),
             "notas_a_emitir.csv": (["id_saida", "tomador_cnpj", "tomador", "linha_negocio", "valor_brl", "discriminacao"], self.notas),
             "lancamentos_classificados.csv": (["id_saida", "banco", "ref_origem", "data", "descricao", "valor", "conta_codigo", "metodo", "confianca", "regra", "motivo"], self.lancamentos),
             "pendencias.csv": (["id_saida", "tipo", "ref_origem", "valor_brl", "motivo", "quem_decide"], self.pendencias),
