@@ -1,5 +1,5 @@
 {
-  "executado_em": "2026-10-20T01:24:52Z",
+  "executado_em": "2026-10-20T02:28:45Z",
   "pasta": "dados",
   "arquivos": [
     {
@@ -138,6 +138,6 @@
       "4.3.01": 1,
       "3.2.01": 1
     },
-    "duracao_s": 0.07
+    "duracao_s": 0.08
   }
 }
