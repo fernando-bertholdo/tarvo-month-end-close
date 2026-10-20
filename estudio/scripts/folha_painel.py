@@ -1,4 +1,4 @@
-"""Contact sheet of the panel captures (estudio/out/previews/painel) for the Critic.
+"""Contact sheet of the panel captures (estudio/out/previews/painel-<rodada>) for the Critic.
 
 Reads captura.json (written by capturar_painel.mjs) for the order and the caption of each
 screen, scales every screen to the same box and tiles them with their file name and caption.
@@ -7,6 +7,7 @@ Usage (from the repository root, after capturar_painel.mjs):
     python3 estudio/scripts/folha_painel.py [r0]
 Output: estudio/reviews/contact-sheets/painel-<rodada>.png
 
+From r4 on, each round keeps its screens in out/previews/painel-<rodada> (earlier rounds: out/previews/painel).
 From r3 on, if the capture kept video frames in reviews/frames/painel-<rodada>/tiras.json, each strip
 (frames of the 1x video with the replay clock written under them) goes to out/previews/painel/ as
 <rodada>-video-<name>.png and into the sheet.
@@ -18,7 +19,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
 ESTUDIO = Path(__file__).resolve().parents[1]
-PREVIEWS = ESTUDIO / "out" / "previews" / "painel"
+PREVIEWS = ESTUDIO / "out" / "previews" / "painel"  # rounds up to r3; see pasta_da_rodada
 OUT_DIR = ESTUDIO / "reviews" / "contact-sheets"
 COLS, CELL_W, CELL_H, GAP, LABEL_H = 4, 480, 300, 16, 48
 SKIP = ("01b-",)  # full-page screens do not fit the box; they stay as separate files
@@ -31,6 +32,12 @@ def font(size):
         except OSError:
             continue
     return ImageFont.load_default()
+
+
+def pasta_da_rodada(rodada):
+    """The round's own folder of screens (r4 on), else the shared one of the earlier rounds."""
+    propria = ESTUDIO / "out" / "previews" / f"painel-{rodada}"
+    return propria if (propria / "captura.json").exists() else ESTUDIO / "out" / "previews" / "painel"
 
 
 def strips(rodada):
@@ -63,6 +70,8 @@ def strips(rodada):
 
 
 def main(rodada):
+    global PREVIEWS
+    PREVIEWS = pasta_da_rodada(rodada)
     report = json.loads((PREVIEWS / "captura.json").read_text(encoding="utf-8"))
     telas = list(report["telas"]) + strips(rodada)
     live = PREVIEWS / "captura-vivo.json"

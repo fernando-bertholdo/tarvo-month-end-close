@@ -6,10 +6,10 @@
 // Usage, from the repository root. The live run rewrites relatorio/ and saida/ of the repository it
 // serves, so from r2 on it runs against a copy (PAINEL_RAIZ_VIVO), and the frozen data stay untouched:
 //     PAINEL_RAIZ_VIVO=/tmp/copia node estudio/scripts/capturar_painel.mjs --so-vivo
-//     python3 -m src.tarvo.painel relatorio/eventos.jsonl relatorio/painel.html
+//     TARVO_IA_PORTA=nenhuma python3 -m src.tarvo dados
 //     node estudio/scripts/capturar_painel.mjs --sem-vivo
-// Flags: --so-vivo (live mode only), --sem-vivo, --sem-video, --so-video.
-// Output: estudio/out/previews/painel/*.png, reproducao-1x.mp4, captura.json, captura-vivo.json
+// Flags: --so-vivo (live mode only), --sem-vivo, --sem-video, --so-video, --rodada=<r4> (the round's folder).
+// Output: estudio/out/previews/painel-<rodada>/*.png, reproducao-1x.mp4, captura.json, captura-vivo.json
 import { createRequire } from 'module';
 import { spawn, spawnSync } from 'child_process';
 import fs from 'fs';
@@ -22,7 +22,9 @@ const RAIZ = path.resolve(ESTUDIO, '..');
 const require = createRequire(path.join(ESTUDIO, 'ferramentas', 'package.json'));
 const { chromium } = require('playwright');
 
-const SAIDA = path.join(ESTUDIO, 'out', 'previews', 'painel');
+// r4: each round keeps its screens in its own folder (out/previews/painel-<rodada>)
+const RODADA = (process.argv.find((a) => a.startsWith('--rodada=')) || '--rodada=r4').split('=')[1];
+const SAIDA = path.join(ESTUDIO, 'out', 'previews', 'painel-' + RODADA);
 const PAINEL = pathToFileURL(path.join(RAIZ, 'relatorio', 'painel.html')).href;
 const D = JSON.parse(fs.readFileSync(path.join(ESTUDIO, 'dados', 'fechamento.json'), 'utf8'));
 const ARGS = new Set(process.argv.slice(2));
@@ -35,10 +37,10 @@ const MUNDO = DIVS.filter((c) => c[8] === 'Mundo Aberto');
 const NOTAS_CENTAVOS = fs.readFileSync(path.join(RAIZ, 'relatorio', 'eventos.jsonl'), 'utf8').trim().split('\n').map((l) => JSON.parse(l))
   .filter((e) => e.tipo === 'decisao' && e.resultado === 'nota').sort((a, b) => a.seq - b.seq)
   .reduce((acc, e) => { acc.push((acc.length ? acc[acc.length - 1] : 0) + Math.round(e.valor * 100)); return acc; }, []);
-// r3: the three Resumo screens already in the deck must come out equal to r2's
-const DECK = ['01-resumo-1440.png', 'fluxo-1440-1-rota-global.png', 'fluxo-1440-2-financeiro.png'];
-const SAIDA_R2 = path.join(ESTUDIO, 'out', 'previews', 'painel-r2');
-const QUADROS_R3 = path.join(ESTUDIO, 'reviews', 'frames', 'painel-r3');
+// the page's own source for the header: the engine's month scope (`fim.resumo.duracao_s`); the frozen
+// fechamento.json of the film may come from an earlier run
+const DURACAO_S = fs.readFileSync(path.join(RAIZ, 'relatorio', 'eventos.jsonl'), 'utf8').trim().split('\n').map((l) => JSON.parse(l)).filter((e) => e.tipo === 'fim')[0].resumo.duracao_s;
+const QUADROS_R3 = path.join(ESTUDIO, 'reviews', 'frames', 'painel-' + RODADA);
 fs.mkdirSync(SAIDA, { recursive: true });
 
 // ---------------------------------------------------------------- expected strings (from the engine)
@@ -71,6 +73,12 @@ const ESPERADO = {
   mundo: [
     brl(parseFloat(MUNDO[0][6])), F0.format(MUNDO.length) + ' operações', brl(din.taxa_acima_do_contrato.contestar_ponte), 'Decide: Financeiro',
     'Valor pago pelo cliente', 'à PTAX',
+  ],
+  // r4: the origin strip of the first group (Rota Global), the same sale as its drawer
+  faixa: [
+    'Origem · ' + rota.lojista.replace(/\s+Ltda\.?$/, ''), 'Contrato', pct(rota.taxa_contratada_pct), 'A Orbe cobrou', pct(rota.taxa_aplicada_pct),
+    brl(rota.diferenca_brl), 'a mais nesta venda', F2.format(rota.taxa_aplicada_pct - rota.taxa_contratada_pct) + ' ponto',
+    F0.format(rota.operacoes_com_divergencia) + ' operações', brl(rota.total_a_cobrar_brl), 'a cobrar da Orbe', 'Decide: ' + rota.quem_decide,
   ],
 };
 // Engine language that must stay out of the main layer (it belongs to "Rastro técnico").
@@ -164,8 +172,8 @@ console.log('1440x900');
   await confere(page, 'Resumo 1440', ESPERADO.resumo, '#v-resumo');
   await semMotor(page, 'Resumo 1440', 'body');
   await foto(page, '01b-resumo-1440-inteira', 'Resumo, página inteira', { inteira: true });
-  const fechado = 'Fechado em ' + F2.format(D.duracao_s.valor) + ' s';
-  relato.numeros.push({ onde: 'Cabeçalho', esperado: fechado + ' (fechamento.json)', ok: normal(await page.evaluate(() => document.getElementById('estado').innerText)).includes(fechado) });
+  const fechado = 'Fechado em ' + F2.format(DURACAO_S) + ' s';
+  relato.numeros.push({ onde: 'Cabeçalho', esperado: fechado + ' (fim.resumo.duracao_s)', ok: normal(await page.evaluate(() => document.getElementById('estado').innerText)).includes(fechado) });
   relato.conferencia = await page.evaluate(() => window.__painel.conferencia());
   relato.pausas = await page.evaluate(() => { const a = window.__painel.auditoriaPausas(); const por = {}; a.lista.forEach((x) => { por[x.k] = (por[x.k] || 0) + x.na_tela; }); return { itens: a.itens, menor_sobra_ms: a.menor_sobra, tempo_por_tipo_ms: por, lista: a.lista }; });
   relato.reproducao_etapas_ms = await page.evaluate(() => window.__painel.debugTL().porEtapa);
@@ -307,6 +315,72 @@ console.log('1440x900');
   await page.click('#b-projecao');
   await espera(400);
   await foto(page, '17-projecao-1440', 'Modo projeção (tudo × 1,25)');
+  await ctx.close();
+}
+
+// ---------------------------------------------------------------- r4: the origin strip and the one-line pending list
+// The strip under the divergence table (four links, no arrow glyph, no ids) and one line per pending item
+// (title, value, owner seal; the complement in the drawer). Every title that does not fit one line is
+// listed, never cut with "…"; values end on one edge and seals start on one edge.
+console.log('r4: faixa de origem e pendências em uma linha');
+relato.r4 = { telas: [] };
+const AUDITA_R4 = () => {
+  const linhas = (el) => { const r = document.createRange(); r.selectNodeContents(el); return new Set(Array.from(r.getClientRects()).map((x) => Math.round(x.top))).size; };
+  const itens = Array.from(document.querySelectorAll('#pend-lista .pend-item'));
+  const titulos = itens.map((li) => ({ titulo: li.querySelector('.pend-titulo').innerText, linhas: linhas(li.querySelector('.pend-titulo')) }));
+  const borda = (sel, lado) => new Set(itens.map((li) => Math.round(li.querySelector(sel).getBoundingClientRect()[lado]))).size === 1;
+  const faixa = document.querySelector('.faixa'), f = faixa.getBoundingClientRect();
+  const caixas = Array.from(faixa.querySelectorAll('.elo-caixa')).map((c) => ({ texto: c.innerText.replace(/\s+/g, ' '), transborda: c.scrollWidth > c.clientWidth + 1 }));
+  return { itens: itens.length, que_quebram: titulos.filter((x) => x.linhas > 1).map((x) => x.titulo), maior_numero_de_linhas: Math.max(...titulos.map((x) => x.linhas)),
+    valores_numa_borda: borda('.pend-valor', 'right'), selos_numa_borda: borda('.selo', 'left'), reticencia: itens.some((li) => /…/.test(li.innerText)),
+    complemento_na_lista: document.querySelectorAll('#pend-lista .pend-meta').length, titulo_px: parseFloat(getComputedStyle(document.querySelector('.pend-titulo')).fontSize),
+    faixa: { titulo: document.querySelector('.faixa-titulo').innerText, caixas, caixa_transborda: caixas.some((c) => c.transborda), topo_na_pagina: Math.round(f.top + scrollY), seta_glifo: /→/.test(faixa.innerText) } };
+};
+const mostra = async (page, sel) => { await page.evaluate((s) => { document.querySelector(s).scrollIntoView({ block: 'start' }); window.scrollBy(0, -(document.getElementById('topo').offsetHeight + 16)); }, sel); await espera(250); };
+for (const [rot, vp, proj] of [['1440', { width: 1440, height: 900 }, false], ['1280', { width: 1280, height: 720 }, false], ['proj1440', { width: 1440, height: 900 }, true], ['proj1280', { width: 1280, height: 720 }, true]]) {
+  const { ctx, page } = await abre('r4-' + rot, vp, {}, PAINEL + (proj ? '?projecao=1' : ''));
+  const a = await page.evaluate(AUDITA_R4);
+  relato.r4.telas.push({ tela: rot, ...a });
+  await confere(page, 'Faixa de origem ' + rot, ESPERADO.faixa, '.faixa-origem');
+  await semMotor(page, 'Faixa de origem ' + rot, '.faixa-origem');
+  relato.numeros.push({ onde: 'Faixa de origem ' + rot, esperado: 'quatro elos inteiros, sem glifo de seta', ok: a.faixa.caixas.length === 4 && !a.faixa.caixa_transborda && !a.faixa.seta_glifo });
+  relato.numeros.push({ onde: 'Pendências em uma linha ' + rot, esperado: `${pend.quantidade} linhas sem "…" nem complemento; valores numa borda, selos noutra; título que não cabe quebra na própria coluna (no máximo 2 linhas)`,
+    ok: a.itens === pend.quantidade && !a.reticencia && !a.complemento_na_lista && a.valores_numa_borda && a.selos_numa_borda && a.maior_numero_de_linhas <= 2, visto: a.que_quebram.length + ' quebram' });
+  await mostra(page, '.faixa-titulo');
+  await foto(page, `r4-resumo-${rot}-faixa`, `Resumo a ${vp.width}×${vp.height}${proj ? ' em projeção' : ''}: faixa de origem embaixo da tabela de divergências`);
+  await mostra(page, '#pend-cabeca');
+  await foto(page, `r4-resumo-${rot}-pendencias`, `Resumo a ${vp.width}×${vp.height}${proj ? ' em projeção' : ''}: pendências em uma linha (${a.que_quebram.length} títulos em duas)`);
+  await semMotor(page, 'Pendências em uma linha ' + rot, '#pend-lista');
+  if (!proj) {
+    // a click on the strip opens the Rota Global drawer, as the table row does, and selects that row
+    await mostra(page, '.faixa-titulo');
+    await page.click('.faixa');
+    await page.waitForSelector('#gaveta[data-assentado="1"]', { timeout: 10000 });
+    await espera(700);
+    const g = await page.evaluate(() => ({ titulo: document.getElementById('gaveta-titulo').textContent, linha: (document.querySelector('.tabela tr.selecionada .nome-botao') || {}).textContent || null }));
+    await foto(page, `r4-faixa-abre-gaveta-${rot}`, `Clique na faixa a ${vp.width}×${vp.height}: abre a gaveta da Rota Global e seleciona a linha dela na tabela`);
+    relato.numeros.push({ onde: 'Clique na faixa ' + rot, esperado: 'abre a gaveta da Rota Global e seleciona a linha da tabela', ok: g.titulo === rota.lojista && g.linha === rota.lojista });
+    await confere(page, 'Gaveta pela faixa ' + rot, ESPERADO.rota, '#gaveta');
+    await page.keyboard.press('Escape');
+    await espera(400);
+    // a pending item opened from its line (the click lands on the value, not on the title)
+    // the title's button covers the whole line: a click where the value is opens the drawer
+    const valor = page.locator('[data-alvo="pend:PEN-0012"] .pend-valor');
+    await valor.scrollIntoViewIfNeeded();
+    const caixa = await valor.boundingBox();
+    await page.mouse.click(caixa.x + caixa.width / 2, caixa.y + caixa.height / 2);
+    await page.waitForSelector('#gaveta[data-assentado="1"]', { timeout: 10000 });
+    await espera(1200);
+    await foto(page, `r4-gaveta-pendencia-pela-lista-${rot}`, `Pendência aberta pela linha da lista a ${vp.width}×${vp.height}: conferir o crédito da Ponte, com o complemento`);
+    await confere(page, 'Gaveta pela lista ' + rot, ['Conferir o crédito da Ponte contra a nota', 'R$ 39.543,45', 'Nota única de remessa.', 'Decide: Financeiro', '228 linhas', '6 de 228 linhas'], '#gaveta');
+    await semMotor(page, 'Gaveta pela lista ' + rot, '#gaveta');
+    await page.evaluate(() => { document.getElementById('gaveta-corpo').scrollTop = 1e6; });
+    await espera(300);
+    await foto(page, `r4-gaveta-pendencia-pela-lista-${rot}-rastro`, `A mesma gaveta rolada até o Rastro técnico: o motivo do motor como vem (crédito de 06/10)`);
+    const rastro = normal(await page.evaluate(() => document.querySelector('#gaveta .rastro').innerText));
+    relato.numeros.push({ onde: 'Gaveta pela lista ' + rot, esperado: 'o motivo do motor como vem, com "06/10", no Rastro técnico', ok: rastro.includes('conferir o crédito da Ponte de 06/10 contra a nota') });
+    await page.keyboard.press('Escape');
+  }
   await ctx.close();
 }
 
@@ -755,17 +829,6 @@ if (!ARGS.has('--sem-vivo') && !SO_VIDEO) {
 }
 
 await browser.close();
-// r3: the three Resumo screens in the deck, against r2: same bytes, or else the same pixels
-if (!SO_VIVO && !SO_VIDEO && fs.existsSync(SAIDA_R2)) {
-  const sha = (f) => spawnSync('shasum', ['-a', '256', f]).stdout.toString().split(' ')[0];
-  relato.deck = DECK.map((f) => {
-    const a = path.join(SAIDA_R2, f), b = path.join(SAIDA, f);
-    // RGB, not RGBA: getbbox of an RGBA image only looks at the alpha band
-    const px = JSON.parse(spawnSync('python3', ['-c', 'import sys, json\nfrom PIL import Image, ImageChops\na=Image.open(sys.argv[1]).convert("RGB"); b=Image.open(sys.argv[2]).convert("RGB")\nd=ImageChops.difference(a,b) if a.size==b.size else None\nn=sum(1 for p in d.get_flattened_data() if p!=(0,0,0)) if d else -1\nm=max((max(p) for p in d.get_flattened_data()), default=0) if d else -1\nprint(json.dumps({"mesmo_tamanho": a.size==b.size, "pixels_diferentes": n, "maior_diferenca": m, "caixa": d.getbbox() if d else None}))', a, b]).stdout.toString().trim());
-    return { tela: f, sha256_r2: sha(a), sha256_r3: sha(b), bytes_iguais: sha(a) === sha(b), ...px };
-  });
-  for (const d of relato.deck) relato.numeros.push({ onde: 'Deck: ' + d.tela, esperado: 'igual à r2 (bytes ou pixels)', ok: d.bytes_iguais || d.pixels_diferentes === 0 });
-}
 if (SO_VIVO) {
   const vivo = { gerado_em: relato.gerado_em, vivo: relato.vivo, telas: relato.telas, console: relato.console, numeros: relato.numeros, proibido: relato.proibido, rolagem_lateral: relato.rolagem_lateral };
   fs.writeFileSync(path.join(SAIDA, 'captura-vivo.json'), JSON.stringify(vivo, null, 2));
@@ -795,7 +858,7 @@ for (const x of relato.pausas_notas || []) console.log(`  ${x.tela}: ${x.cartao}
 for (const x of relato.projecao_r3 || []) console.log(`  ${x.tela}: foco ${x.foco ? x.foco.linhas + ' linhas, inteiro ' + x.foco.inteiro : '-'}, folga ${x.folga_px}, linhas ${x.linhas_mesa}, selo ${x.selo_linhas}`);
 if (relato.projecao_r3_relogio) console.log('  projeção 1280, relógio: ' + JSON.stringify({ amostras: relato.projecao_r3_relogio.amostras, com_olhar: relato.projecao_r3_relogio.com_olhar, cortadas: relato.projecao_r3_relogio.cortadas.length, folga_min: relato.projecao_r3_relogio.folga_minima_px, pulos: relato.projecao_r3_relogio.pulos.length }));
 for (const v of ['amostra_1x', 'amostra_2x']) if (relato[v]) console.log(`  ${v}: ${relato[v].quadros} quadros; contagem ${relato[v].contagem_nao_fecha.length}, comissão ${relato[v].comissao_sem_fechando.length}, notas ${relato[v].notas_sem_emitindo.length}, mesa vazia ${relato[v].mesa_vazia_com_impacto.length}`);
-for (const d of relato.deck || []) console.log(`  deck ${d.tela}: bytes ${d.bytes_iguais} · pixels diferentes ${d.pixels_diferentes} (maior diferença ${d.maior_diferenca})`);
+for (const x of (relato.r4 || { telas: [] }).telas) console.log(`  r4 ${x.tela}: ${x.itens} pendências, ${x.que_quebram.length} em duas linhas (${x.que_quebram.join('; ')}); valores ${x.valores_numa_borda}, selos ${x.selos_numa_borda}; faixa ${x.faixa.caixas.length} elos, transborda ${x.faixa.caixa_transborda}`);
 if (relato.video) console.log('  vídeo: ' + JSON.stringify({ parede: relato.video.reproducao_parede_ms, qps: relato.video.quadros_por_segundo_capturados, maior: relato.video.maior_intervalo_ms }));
 const falhas = relato.numeros.filter((n) => !n.ok);
 console.log(`\n${relato.telas.length} telas · console: ${relato.console.length ? relato.console.length + ' mensagens' : 'sem erros nem avisos'} · números: ${relato.numeros.length - falhas.length}/${relato.numeros.length} · linguagem do motor na camada principal: ${relato.proibido.length} · rolagem lateral: ${relato.rolagem_lateral.length}`);
