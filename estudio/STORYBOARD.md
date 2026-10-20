@@ -743,3 +743,35 @@ comunica. Duração-alvo: até 84 s (2.520 quadros).
   `relatorio/painel.html` regenerado com o motor do `refino/painel` sem IA (`TARVO_IA_PORTA=nenhuma`, com
   `saida/` idêntica), mais a faixa no tema escuro; o vídeo da Reprodução em 1x; folha de contato;
   relatório em `reviews/tecnico-painel-r5.md`; registro do Animador aqui, em "Mudanças".
+
+- **Animador, 20/10, painel r5 (acabamento) (00:38 BRT).** A ordem do Diretor de 19/10, 23:56, itens 1 a 5, pela menor
+  correção. Evidência em `reviews/tecnico-painel-r5.md`; telas em `out/previews/painel-r5/`, folha em
+  `reviews/contact-sheets/painel-r5.png`. Captura feita a partir do `relatorio/painel.html` regenerado sem IA, com `saida/`
+  idêntica.
+
+  *Duração da Reprodução: 103,8 s em 1x (104,1 s na parede; 52,0 s em 2x), a mesma da r4 no milissegundo.* O relógio não
+  mudou: percorrido a cada 50 ms, as páginas r4 e r5 com os mesmos eventos dão as mesmas durações, marcos, olhar, contagens
+  e impacto; só o texto da linha do motor difere, de 77,8 s a 79,4 s (a varredura das Notas). Nenhuma pausa abaixo da regra.
+
+  1. *Defeito 01: só a captura.* A página não mudou. As telas de fluxo seguem o fluxo novo: rolar até "Divergências de
+     taxa" (tabela e faixa inteiras na tela nos quatro modos), clicar na faixa (gaveta da Rota Global, linha selecionada),
+     fechar, voltar ao topo, "Financeiro 12". Três telas por modo: `fluxo-<modo>-1-faixa`, `-2-gaveta`, `-3-financeiro`.
+  2. *Defeito 02: faixa.* Nos quatro elos, rótulo em cima e valor embaixo, com os valores numa linha de base comum (a faixa
+     é uma grade de três linhas e cada elo é subgrade; diferença medida de 0 px). "87 operações" em tinta, a 20 px (25 px em
+     projeção), na linha do R$ 1.546,28 a 1440 e em projeção, e logo antes dele a 1280, onde não cabe na mesma linha; o "·"
+     só aparece entre os dois na mesma linha. O "0,50 ponto" ficou logo abaixo do R$ 32,25. O 1.546,28 segue o maior
+     número; superfície 2, selo, conector, nenhum identificador e o clique na gaveta, como estavam.
+  3. *Defeito 03: linha do motor.* No quadro em que a varredura das Notas começa, a linha troca para "Rotina em lote: feito
+     pela regra." e fica assim nas quatro batidas da varredura e no lote. A pausa da Casa continua antes da varredura (3,46 s
+     na tela, 2,96 s parada, contra 2,83 s da regra); nenhuma batida mudou de duração.
+  4. *Achado 1: "Dinheiro em jogo".* As duas partes da taxa acima do contrato ficam sempre na mesma disposição, medida na
+     tela: se uma não cabe lado a lado, as duas empilham, rótulo sobre valor (1440, 1280 e projeção a 1280); se as duas
+     cabem, ficam lado a lado com os valores na mesma borda (projeção a 1440).
+  5. *Achado 10: separador.* Um título da lista que quebra quebra antes do "·", que desce com o nome ("Contestar com a
+     Ponte" / "· Mundo Aberto"). Quebram os mesmos títulos da r4 (3 a 1440, 10 a 1280).
+
+  *Textos:* "A mais nesta venda" e "A cobrar da Orbe" com inicial maiúscula, porque passaram a ser rótulo em cima do valor;
+  nenhuma palavra mudou. *Para o Diretor* (relatório técnico, "Escolhas"): a 1280 o "87 operações" fica logo antes do total,
+  não na linha dele (a linha pede 297 px e o elo tem 228); as colunas da faixa passaram a seguir o conteúdo, com o destaque
+  mais largo; a 1440 as duas partes do "Dinheiro em jogo" empilham (lado a lado pedem 338 px e a coluna tem 278); em
+  projeção, o filtro "Financeiro 12" não está à vista no topo e o fluxo rola até ele.
