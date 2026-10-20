@@ -6,4 +6,4 @@ Histórico das sessões de IA que apoiaram o case fora do Claude Code, desde a l
 - `vigia-multica/`: o agente que acompanhou o canal do hackathon no Multica (a cada 20 minutos e, a partir das 16h50, a cada 10), com a configuração e uma execução por arquivo.
 - O que está aqui da sessão principal: turnos 42 a 97 (partes B e C). Não entraram a tempo: os turnos 0 a 41 (16/10, 19h21, até 17/10, 0h50: acompanhamento do kickoff, primeiras leituras do canal e o guia do case) e os turnos de 98 em diante (17/10, das 16h50 às 18h20). As sessões 4, 5 e 6 do mesmo projeto (17/10, manhã e tarde) também não entraram a tempo.
 
-Removido, como as instruções permitem: chaves de API, blocos de memória do aplicativo (dados pessoais), e-mails pessoais e nomes de pessoas de outros times. Nada mais foi editado.
+Removido, como as instruções permitem: chaves de API, blocos de memória do aplicativo (dados pessoais), e-mails pessoais e nomes de pessoas de outros times. Nada mais foi editado. Em 20/10, depois da entrega, saíram também os e-mails dos organizadores nos arquivos da vigia.
