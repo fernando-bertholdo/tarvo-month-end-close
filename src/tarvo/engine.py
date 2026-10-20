@@ -16,7 +16,7 @@ import time
 import unicodedata
 import zipfile
 import xml.etree.ElementTree as ET
-from collections import OrderedDict, defaultdict
+from collections import Counter, OrderedDict, defaultdict
 from decimal import Decimal, ROUND_HALF_UP
 from pathlib import Path
 
@@ -241,6 +241,16 @@ class Close:
             self.warn("Arquivo 05a (Aurora) ausente: lançamentos do Aurora bloqueados (F71).")
         if not self.f05b:
             self.warn("Arquivo 05b (Meridiano) ausente: lançamentos do Meridiano bloqueados e transferências do Aurora sem conferência (F71).")
+        self.competencia, self.competencia_seguinte = self.month_of_close()
+
+    def month_of_close(self):
+        """MM/AAAA of the close: the most common month of the Orbe and Ponte dates, and the next one."""
+        months = Counter((d.month, d.year) for d in [date_br(r["data_movimento"]) for r in self.orbe] + [p["data"] for p in self.ponte] if d)
+        if not months:
+            return "", ""
+        (m, y), _ = months.most_common(1)[0]
+        nm, ny = (1, y + 1) if m == 12 else (m + 1, y)
+        return f"{m:02d}/{y}", f"{nm:02d}/{ny}"
 
     def read_orbe(self, path, cols):
         txt = path.read_bytes().decode("utf-8-sig", errors="replace")
@@ -489,7 +499,7 @@ class Close:
                 self.pend("SALDO_NAO_POSITIVO", [l[0] for l in lines], total, f"{nome}: comissão do mês zero ou negativa; não emite nota e o negativo não passa ao mês seguinte (F5, F68)", "Financeiro", lines[0][2], frente="NOTAS", regra="F5", rastro_vals=[(l[0], l[1]) for l in lines])
                 continue
             nid = self.new_id("NF")
-            self.notas.append([nid, cnpj, nome, "CHECKOUT", fmt(total), "Intermediação de pagamentos (MDR e antecipação), checkout, competência 09/2026"])
+            self.notas.append([nid, cnpj, nome, "CHECKOUT", fmt(total), f"Intermediação de pagamentos (MDR e antecipação), checkout, competência {self.competencia}"])
             for ref, com, arq, regra in lines:
                 self.rastro.append([nid, arq, ref, fmt(com), "F4"])
             self.dec("NOTAS", lines[0][2], f"{len(lines)} linhas", "F4", "nota", total, f"nota de {nome}", peso="rotina", id_saida=nid)
@@ -497,7 +507,7 @@ class Close:
         if lines:
             total = sum((l[1] for l in lines), Decimal("0"))
             nid = self.new_id("NF")
-            self.notas.append([nid, PONTE_CNPJ, PONTE_NOME, "REMESSA", fmt(total), "Intermediação de câmbio: 50% do spread realizado, competência 09/2026, sem retenção (F21, F84, F103)"])
+            self.notas.append([nid, PONTE_CNPJ, PONTE_NOME, "REMESSA", fmt(total), f"Intermediação de câmbio: 50% do spread realizado, competência {self.competencia}, sem retenção (F21, F84, F103)"])
             for op, com in lines:
                 self.rastro.append([nid, self.ponte_file, op, fmt(com), "F21/F103"])
             self.nota_ponte = total
@@ -662,6 +672,8 @@ class Close:
             "notas": len(self.notas),
             "pendencias": len(self.pendencias),
             "lancamentos": len(self.lancamentos),
+            "competencia": self.competencia,
+            "competencia_seguinte": self.competencia_seguinte,
             "duracao_s": round(time.time() - t0, 2),
         }
         return {k: (float(v) if isinstance(v, Decimal) else v) for k, v in s.items()}

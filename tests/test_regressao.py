@@ -18,7 +18,7 @@ COLUNAS_NOVAS = {"divergencias_taxa.csv": ["base_brl"]}
 # New fields on events that already existed at the tag.
 CAMPOS_NOVOS = {"base", "escopo", "parcial"}
 # New keys in the month summary (`fim.resumo` and execucao.json).
-RESUMO_NOVO = set()
+RESUMO_NOVO = {"competencia", "competencia_seguinte"}
 # Volatile by nature: when the run happened and how long it took.
 VOLATEIS = {"seq", "ts"}
 
