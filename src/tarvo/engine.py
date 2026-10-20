@@ -727,7 +727,7 @@ class Close:
         for ln in lines:
             d = norm(ln["desc"])
             if "SEM IDENTIFICACAO" in d:
-                self.pend("CREDITO_NAO_IDENTIFICADO", [ln["ref"]], ln["valor"], "Pix recebido sem identificação: identificar o pagador com o banco até o fechamento de outubro (F25, F97)", "Financeiro", ln["arq"], regra="F97", rastro_vals=[(ln["ref"], ln["valor"])])
+                self.pend("CREDITO_NAO_IDENTIFICADO", [ln["ref"]], ln["valor"], f"Pix recebido sem identificação: identificar o pagador com o banco até o fechamento de {self.month_name(self.competencia_seguinte)} (F25, F97)", "Financeiro", ln["arq"], regra="F97", rastro_vals=[(ln["ref"], ln["valor"])])
             if "DEVOLUCAO PIX" in d:
                 self.pend("REPASSE_DEVOLVIDO", [ln["ref"]], ln["valor"], "repasse à Mundo Aberto voltou, motivo desconhecido: confirmar com o lojista e repagar (F26)", "Financeiro", ln["arq"], regra="F26", rastro_vals=[(ln["ref"], ln["valor"])])
         if not self.f05b:  # F71: without the Meridiano statement a transfer cannot be matched
@@ -739,7 +739,7 @@ class Close:
             if -o["valor"] in pool:
                 pool.remove(-o["valor"])
             else:
-                self.pend("TRANSFERENCIA_EM_TRANSITO", [o["ref"]], o["valor"], "transferência ao Meridiano sem entrada em setembro: conferir no extrato de outubro; se não aparecer, tesouraria (F27, F99)", "Tesouraria", o["arq"], regra="F99", rastro_vals=[(o["ref"], o["valor"])])
+                self.pend("TRANSFERENCIA_EM_TRANSITO", [o["ref"]], o["valor"], f"transferência ao Meridiano sem entrada em {self.month_name(self.competencia)}: conferir no extrato de {self.month_name(self.competencia_seguinte)}; se não aparecer, tesouraria (F27, F99)", "Tesouraria", o["arq"], regra="F99", rastro_vals=[(o["ref"], o["valor"])])
 
     def add_lanc(self, ln, conta, metodo, conf, regra, why, **extra):
         lid = self.new_id("LAN")
