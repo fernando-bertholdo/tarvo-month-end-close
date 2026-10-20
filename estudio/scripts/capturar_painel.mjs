@@ -8,7 +8,7 @@
 //     PAINEL_RAIZ_VIVO=/tmp/copia node estudio/scripts/capturar_painel.mjs --so-vivo
 //     TARVO_IA_PORTA=nenhuma python3 -m src.tarvo dados
 //     node estudio/scripts/capturar_painel.mjs --sem-vivo
-// Flags: --so-vivo (live mode only), --sem-vivo, --sem-video, --so-video, --rodada=<r4> (the round's folder).
+// Flags: --so-vivo (live mode only), --sem-vivo, --sem-video, --so-video, --rodada=<r5> (the round's folder).
 // Output: estudio/out/previews/painel-<rodada>/*.png, reproducao-1x.mp4, captura.json, captura-vivo.json
 import { createRequire } from 'module';
 import { spawn, spawnSync } from 'child_process';
@@ -23,7 +23,7 @@ const require = createRequire(path.join(ESTUDIO, 'ferramentas', 'package.json'))
 const { chromium } = require('playwright');
 
 // r4: each round keeps its screens in its own folder (out/previews/painel-<rodada>)
-const RODADA = (process.argv.find((a) => a.startsWith('--rodada=')) || '--rodada=r4').split('=')[1];
+const RODADA = (process.argv.find((a) => a.startsWith('--rodada=')) || '--rodada=r5').split('=')[1];
 const SAIDA = path.join(ESTUDIO, 'out', 'previews', 'painel-' + RODADA);
 const PAINEL = pathToFileURL(path.join(RAIZ, 'relatorio', 'painel.html')).href;
 const D = JSON.parse(fs.readFileSync(path.join(ESTUDIO, 'dados', 'fechamento.json'), 'utf8'));
@@ -74,11 +74,12 @@ const ESPERADO = {
     brl(parseFloat(MUNDO[0][6])), F0.format(MUNDO.length) + ' operações', brl(din.taxa_acima_do_contrato.contestar_ponte), 'Decide: Financeiro',
     'Valor pago pelo cliente', 'à PTAX',
   ],
-  // r4: the origin strip of the first group (Rota Global), the same sale as its drawer
+  // r4: the origin strip of the first group (Rota Global), the same sale as its drawer; r5: every label on
+  // top of its value, so the two labels that followed their value start with a capital
   faixa: [
     'Origem · ' + rota.lojista.replace(/\s+Ltda\.?$/, ''), 'Contrato', pct(rota.taxa_contratada_pct), 'A Orbe cobrou', pct(rota.taxa_aplicada_pct),
-    brl(rota.diferenca_brl), 'a mais nesta venda', F2.format(rota.taxa_aplicada_pct - rota.taxa_contratada_pct) + ' ponto',
-    F0.format(rota.operacoes_com_divergencia) + ' operações', brl(rota.total_a_cobrar_brl), 'a cobrar da Orbe', 'Decide: ' + rota.quem_decide,
+    'A mais nesta venda', brl(rota.diferenca_brl), F2.format(rota.taxa_aplicada_pct - rota.taxa_contratada_pct) + ' ponto',
+    'A cobrar da Orbe', F0.format(rota.operacoes_com_divergencia) + ' operações', brl(rota.total_a_cobrar_brl), 'Decide: ' + rota.quem_decide,
   ],
 };
 // Engine language that must stay out of the main layer (it belongs to "Rastro técnico").
@@ -198,7 +199,7 @@ console.log('1440x900');
   // Every 250 ms of the clock: the counts add up, and the commission card never shows a partial
   // without "fechando…" while a merchant of the front is still open (defect 01, r2).
   relato.varredura = await page.evaluate(([passo, somas]) => {
-    const P = window.__painel, d = P.duracao(), out = { passo_ms: passo, amostras: 0, contagem_nao_fecha: [], parcial_sem_fechando: [], com_fecho_aberto: 0, notas_abertas: 0, notas_sem_emitindo: [], notas_soma_errada: [] };
+    const P = window.__painel, d = P.duracao(), out = { passo_ms: passo, amostras: 0, contagem_nao_fecha: [], parcial_sem_fechando: [], com_fecho_aberto: 0, notas_abertas: 0, notas_sem_emitindo: [], notas_soma_errada: [], notas_com_linha_da_casa: [] };
     const brl = (c) => new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(c / 100);
     for (let t = 0; t < d; t += passo) {
       P.seek(t);
@@ -211,6 +212,8 @@ console.log('1440x900');
         if (n.aberto) { out.notas_abertas++; if (!n.texto.includes('emitindo… (' + n.notas + ' de ' + n.total + ' notas)'.replace(/ /g, ' '))) out.notas_sem_emitindo.push([t, n.texto]); }
         else if (/emitindo/.test(n.texto) || n.notas !== n.total) out.notas_sem_emitindo.push([t, n.texto]);
         if (!n.texto.includes(brl(somas[n.notas - 1]))) out.notas_soma_errada.push([t, n.texto]);
+        // defect 03, r4: once a note is issued the desk never speaks of the Casa do Estudante again
+        if (/Casa do Estudante sem nota/.test(document.getElementById('mesa-motivo').innerText)) out.notas_com_linha_da_casa.push([t, n.notas]);
       }
     }
     return out;
@@ -219,6 +222,7 @@ console.log('1440x900');
   relato.numeros.push({ onde: 'Varredura do relógio (a cada 250 ms)', esperado: 'cartão da comissão com lojista aberto sempre diz "fechando…"', ok: !relato.varredura.parcial_sem_fechando.length });
   relato.numeros.push({ onde: 'Varredura do relógio (a cada 250 ms)', esperado: 'cartão das notas com nota por emitir sempre diz "emitindo… (k de 21 notas)"; com todas, "21 notas a emitir"', ok: !relato.varredura.notas_sem_emitindo.length && relato.varredura.notas_abertas > 0 });
   relato.numeros.push({ onde: 'Varredura do relógio (a cada 250 ms)', esperado: 'valor do cartão das notas = soma exata das k primeiras notas', ok: !relato.varredura.notas_soma_errada.length });
+  relato.numeros.push({ onde: 'Varredura do relógio (a cada 250 ms)', esperado: 'com uma nota emitida, a linha do motor nunca fala da Casa do Estudante (defeito 03, r4)', ok: !relato.varredura.notas_com_linha_da_casa.length });
   // r3, finding 1: the desk is back on the Aurora statement, with the gaze on the Pix row, before the
   // impact reacts; then the Pix item
   relato.marcos_r3 = await page.evaluate(() => window.__painel.marcosR3());
@@ -336,11 +340,64 @@ const AUDITA_R4 = () => {
     complemento_na_lista: document.querySelectorAll('#pend-lista .pend-meta').length, titulo_px: parseFloat(getComputedStyle(document.querySelector('.pend-titulo')).fontSize),
     faixa: { titulo: document.querySelector('.faixa-titulo').innerText, caixas, caixa_transborda: caixas.some((c) => c.transborda), topo_na_pagina: Math.round(f.top + scrollY), seta_glifo: /→/.test(faixa.innerText) } };
 };
+// r5 (defect 02, findings 1 and 10, Critic r4): in every link of the strip the label is above the value and
+// the four values share one baseline (text box minus the font's descent, measured on a canvas); the
+// operations are in ink at the values' size, on the total's line or right before it, and the total is the
+// largest number; the "·" shows only between the two on one line. The two parts of the rate above the
+// contract share one arrangement. A wrapped title of the list never ends its first line with "·".
+const AUDITA_R5 = () => {
+  const cv = document.createElement('canvas').getContext('2d');
+  const base = (el) => {
+    const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); let n, ult = null;
+    while ((n = w.nextNode())) if (/\d/.test(n.data)) ult = n;
+    const rg = document.createRange(); rg.selectNodeContents(ult); const rc = rg.getClientRects()[0], cs = getComputedStyle(ult.parentElement);
+    cv.font = cs.fontWeight + ' ' + cs.fontSize + ' ' + cs.fontFamily;
+    return Math.round((rc.bottom - cv.measureText('0').fontBoundingBoxDescent) * 10) / 10;
+  };
+  const linhas = (el) => { const por = {}; const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); let n; while ((n = w.nextNode())) for (let i = 0; i < n.length; i++) { const r = document.createRange(); r.setStart(n, i); r.setEnd(n, i + 1); const q = r.getClientRects()[0]; if (q) { const y = Math.round(q.top); por[y] = (por[y] || '') + n.data[i]; } } return Object.keys(por).sort((a, b) => a - b).map((k) => por[k].replace(/\s+/g, ' ').trim()); };
+  const f = document.querySelector('.faixa');
+  const elos = Array.from(f.querySelectorAll('.elo-caixa')).map((c) => {
+    const rot = c.querySelector('.elo-rot'), num = c.querySelector('.elo-valor .elo-num, .elo-valor .elo-total');
+    return { rotulo: rot.innerText, valor: c.querySelector('.elo-valor').innerText.replace(/\s+/g, ' '), rotulo_em_cima: rot.getBoundingClientRect().bottom <= num.getBoundingClientRect().top + 1, base: base(num) };
+  });
+  const bases = elos.map((e) => e.base), ops = f.querySelector('.elo-ops'), tot = f.querySelector('.elo-total');
+  const o = ops.getBoundingClientRect(), t = tot.getBoundingClientRect(), bo = base(ops), bt = base(tot);
+  const px = (el) => parseFloat(getComputedStyle(el).fontSize), valorPx = px(f.querySelector('.elo-caixa .elo-num'));
+  // right before: the total's baseline one line below the operations' (boxes overlap: a 28 px figure's
+  // content area rises above its line), in the same column
+  const mesmaLinha = Math.abs(bo - bt) <= 1 && o.right <= t.left, logoAntes = !mesmaLinha && bt - bo > 1 && bt - bo <= 1.6 * px(tot) && t.left < o.right && o.left < t.right;
+  const sep = f.querySelector('.elo-junto .sep'), corte = f.querySelector('.elo-caixa.destaque .elo-valor').getBoundingClientRect().left;
+  const sepVisivel = !!sep && sep.getBoundingClientRect().left >= corte - 0.5;
+  const din = Array.from(document.querySelectorAll('.dinheiro-col')).filter((c) => c.querySelector('.sub')).map((c) => {
+    const subs = Array.from(c.querySelectorAll('.sub')).map((x) => { const a = x.getBoundingClientRect(), v = x.querySelector('.alvo').getBoundingClientRect(); return { texto: x.innerText.replace(/\s+/g, ' '), empilhada: v.top - a.top > v.height / 2, valor_esq: Math.round(v.left), valor_dir: Math.round(v.right) }; });
+    const mesma = subs.every((x) => x.empilhada === subs[0].empilhada) && new Set(subs.map((x) => (subs[0].empilhada ? x.valor_esq : x.valor_dir))).size === 1;
+    return { disposicao: subs[0].empilhada ? 'empilhadas' : 'lado a lado', mesma_disposicao: mesma, subs };
+  });
+  const titulos = Array.from(document.querySelectorAll('#pend-lista .pend-titulo')).map(linhas).filter((ls) => ls.length > 1);
+  return {
+    faixa: { elos, bases, base_comum: Math.max(...bases) - Math.min(...bases) <= 1, rotulos_em_cima: elos.every((e) => e.rotulo_em_cima),
+      operacoes: { texto: ops.innerText, px: px(ops), valor_px: valorPx, tinta: getComputedStyle(ops).color === getComputedStyle(document.body).color,
+        onde: mesmaLinha ? 'na linha do total' : logoAntes ? 'logo antes do total' : 'fora', separador: sepVisivel ? 'entre os dois' : 'cortado' },
+      total_px: px(tot), total_e_o_maior: Array.from(f.querySelectorAll('.elo-num, .elo-total')).every((x) => px(x) <= px(tot)) },
+    dinheiro: din, titulos_que_quebram: titulos, ponto_pendurado: titulos.filter((ls) => ls.slice(0, -1).some((l) => /·$/.test(l))).length,
+  };
+};
+const confereR5 = (rot, a) => {
+  const fx = a.faixa, op = fx.operacoes;
+  relato.numeros.push({ onde: 'Faixa de origem r5 ' + rot, esperado: 'rótulo em cima do valor nos quatro elos; os quatro valores numa linha de base comum (até 1 px)', ok: fx.rotulos_em_cima && fx.base_comum, visto: fx.bases.join(' / ') });
+  relato.numeros.push({ onde: 'Faixa de origem r5 ' + rot, esperado: '"87 operações" em tinta no tamanho dos valores, na linha do total ou logo antes; o total é o maior número; o "·" só entre os dois na mesma linha',
+    ok: op.tinta && op.px === op.valor_px && op.onde !== 'fora' && fx.total_e_o_maior && (op.onde === 'na linha do total') === (op.separador === 'entre os dois'), visto: `${op.px} px, ${op.onde}, separador ${op.separador}, total ${fx.total_px} px` });
+  relato.numeros.push({ onde: 'Dinheiro em jogo r5 ' + rot, esperado: 'as duas partes da taxa acima do contrato na mesma disposição, valores numa borda', ok: a.dinheiro.length > 0 && a.dinheiro.every((c) => c.mesma_disposicao), visto: a.dinheiro.map((c) => c.disposicao).join(', ') });
+  relato.numeros.push({ onde: 'Lista r5 ' + rot, esperado: 'nenhum título que quebra termina a primeira linha em "·"', ok: a.ponto_pendurado === 0, visto: a.titulos_que_quebram.length + ' quebram' });
+};
 const mostra = async (page, sel) => { await page.evaluate((s) => { document.querySelector(s).scrollIntoView({ block: 'start' }); window.scrollBy(0, -(document.getElementById('topo').offsetHeight + 16)); }, sel); await espera(250); };
 for (const [rot, vp, proj] of [['1440', { width: 1440, height: 900 }, false], ['1280', { width: 1280, height: 720 }, false], ['proj1440', { width: 1440, height: 900 }, true], ['proj1280', { width: 1280, height: 720 }, true]]) {
   const { ctx, page } = await abre('r4-' + rot, vp, {}, PAINEL + (proj ? '?projecao=1' : ''));
   const a = await page.evaluate(AUDITA_R4);
   relato.r4.telas.push({ tela: rot, ...a });
+  const a5 = await page.evaluate(AUDITA_R5);
+  relato.r5 = relato.r5 || { telas: [] }; relato.r5.telas.push({ tela: rot, ...a5 });
+  confereR5(rot, a5);
   await confere(page, 'Faixa de origem ' + rot, ESPERADO.faixa, '.faixa-origem');
   await semMotor(page, 'Faixa de origem ' + rot, '.faixa-origem');
   relato.numeros.push({ onde: 'Faixa de origem ' + rot, esperado: 'quatro elos inteiros, sem glifo de seta', ok: a.faixa.caixas.length === 4 && !a.faixa.caixa_transborda && !a.faixa.seta_glifo });
@@ -384,29 +441,55 @@ for (const [rot, vp, proj] of [['1440', { width: 1440, height: 900 }, false], ['
   await ctx.close();
 }
 
-// ---------------------------------------------------------------- pitch flow, timed (storyboard: Rota Global, then "Financeiro 12")
+// ---------------------------------------------------------------- pitch flow, timed (storyboard, Parte 2, "Fluxo do pitch", r5)
+// Defect 01 (Critic r4): the strip sits below the first fold, so the flow scrolls to it. Scroll to
+// "Divergências de taxa" (table and strip together on the screen), read the strip left to right, click it
+// (the Rota Global drawer opens and its row is selected), close the drawer, back to the top, click
+// "Financeiro 12". One screen with the whole strip before the click, one with the drawer open, one after
+// the filter; at 1440, at 1280 and in projection at both sizes. The page does not change for this.
 console.log('fluxo do pitch');
 for (const [rotulo, vp, proj] of [['1440', { width: 1440, height: 900 }, false], ['1280', { width: 1280, height: 720 }, false], ['projecao-1280', { width: 1280, height: 720 }, true], ['projecao-1440', { width: 1440, height: 900 }, true]]) {
   const { ctx, page } = await abre('fluxo-' + rotulo, vp, {}, PAINEL + (proj ? '?projecao=1' : ''));
+  // 1. scroll to "Divergências de taxa": its title right under the sticky header
+  const antes = await page.evaluate(() => {
+    const topo = document.getElementById('topo').getBoundingClientRect().bottom;
+    const titulo = document.getElementById('t-div').closest('.secao-titulo');
+    window.scrollTo({ top: titulo.getBoundingClientRect().top + window.scrollY - topo - 12, behavior: 'instant' });
+    const f = document.querySelector('.faixa-origem').getBoundingClientRect(), tb = document.querySelector('.tabela').getBoundingClientRect();
+    const linha = document.querySelector('.tabela tr[data-alvo]').getBoundingClientRect();
+    return { faixa_inteira: f.top >= topo && f.bottom <= innerHeight, tabela_inteira: tb.top >= topo && tb.bottom <= innerHeight, linha_rota_visivel: linha.top >= topo && linha.bottom <= innerHeight,
+      faixa_y: [Math.round(f.top), Math.round(f.bottom)], tabela_y: [Math.round(tb.top), Math.round(tb.bottom)], rolagem: Math.round(window.scrollY),
+      texto_faixa: document.querySelector('.faixa').innerText.replace(/\s+/g, ' ') };
+  });
+  await espera(200);
+  await foto(page, `fluxo-${rotulo}-1-faixa`, `Fluxo do pitch a ${vp.width}×${vp.height}${proj ? ' em projeção' : ''}: rolado até "Divergências de taxa", tabela e faixa inteiras antes do clique`);
+  // 2. click on the strip: the Rota Global drawer, its chain settled
   const t0 = Date.now();
-  await page.getByRole('button', { name: rota.lojista, exact: true }).first().click();
+  await page.click('.faixa');
   await page.waitForSelector('#gaveta[data-assentado="1"]', { timeout: 10000 });
   const cadeia = Date.now() - t0;
   const medida = await page.evaluate(() => {
     const d = document.querySelector('#gaveta .decide').getBoundingClientRect(), c = document.getElementById('gaveta-corpo').getBoundingClientRect();
     const passos = Array.from(document.querySelectorAll('#gaveta .passo')).slice(0, 4).map((x) => x.innerText).join(' ');
-    const g = document.getElementById('gaveta').getBoundingClientRect(), linha = document.querySelector('.tabela tr.selecionada').getBoundingClientRect();
-    const tam = (sel) => Math.min(...Array.from(document.querySelectorAll(sel)).map((x) => parseFloat(getComputedStyle(x).fontSize)));
-    return { dono_visivel_sem_rolar: d.bottom <= c.bottom && d.top >= c.top, texto: passos, gaveta_px: Math.round(g.width), cobre_linha: !(g.left >= linha.right || g.right <= linha.left),
+    const g = document.getElementById('gaveta').getBoundingClientRect(), sel = document.querySelector('.tabela tr.selecionada'), linha = sel.getBoundingClientRect(), fx = document.querySelector('.faixa').getBoundingClientRect();
+    const cobre = (r) => !(g.left >= r.right || g.right <= r.left);
+    const tam = (q) => Math.min(...Array.from(document.querySelectorAll(q)).map((x) => parseFloat(getComputedStyle(x).fontSize)));
+    return { gaveta: document.getElementById('gaveta-titulo').textContent, linha_selecionada: (sel.querySelector('.nome-botao') || {}).textContent || null,
+      dono_visivel_sem_rolar: d.bottom <= c.bottom && d.top >= c.top, texto: passos, gaveta_px: Math.round(g.width), cobre_linha: cobre(linha), cobre_faixa: cobre(fx),
       menor_numero_px: tam('#gaveta .passo .grande'), menor_rotulo_px: Math.min(tam('#gaveta .passo .rot'), tam('#gaveta .decide')) };
   });
   await espera(600); // what the total is and who decides fade in after the count
-  await foto(page, `fluxo-${rotulo}-1-rota-global`, `Fluxo do pitch a ${vp.width}×${vp.height}${proj ? ' em projeção' : ''}: Mergulho da Rota Global assentado`);
+  await foto(page, `fluxo-${rotulo}-2-gaveta`, `Fluxo do pitch a ${vp.width}×${vp.height}${proj ? ' em projeção' : ''}: clique na faixa, gaveta da Rota Global aberta e a linha dela selecionada`);
+  // 3. close the drawer, back to the top, "Financeiro 12"
+  await page.keyboard.press('Escape');
+  await page.waitForFunction(() => document.getElementById('gaveta').hidden, null, { timeout: 3000 });
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+  await espera(200);
+  const noTopo = await page.evaluate(() => { const b = document.querySelector('.filtro[data-dono="Financeiro"]').getBoundingClientRect(), topo = document.getElementById('topo').getBoundingClientRect().bottom; return b.top >= topo && b.bottom <= innerHeight; });
   const t1 = Date.now();
   await page.evaluate(() => { window.__rolagemAntes = window.scrollY; });
-  await page.click('.filtro[data-dono="Financeiro"]');
+  await page.click('.filtro[data-dono="Financeiro"]'); // Playwright scrolls the button into view first, as the presenter would
   await page.mouse.move(2, 2); // no hover left over the list in the screenshot
-  await page.waitForFunction(() => document.getElementById('gaveta').hidden, null, { timeout: 3000 });
   await espera(700); // smooth scroll
   const depois = await page.evaluate(() => {
     const f = document.getElementById('filtros-pend').getBoundingClientRect(), topo = document.getElementById('topo').getBoundingClientRect();
@@ -417,14 +500,16 @@ for (const [rotulo, vp, proj] of [['1440', { width: 1440, height: 900 }, false],
       itens: itens.length, cabecalho: document.getElementById('pend-cabeca').innerText.replace(/\s+/g, ' '), titulos: Array.from(itens).slice(0, 3).map((x) => x.querySelector('.pend-titulo').innerText) };
   });
   const filtro = Date.now() - t1;
-  await foto(page, `fluxo-${rotulo}-2-financeiro`, `Fluxo do pitch a ${vp.width}×${vp.height}${proj ? ' em projeção' : ''}: depois de "Financeiro ${pend.por_dono.Financeiro}"`);
-  const leituraCadeia = pausaRegra(words(medida.texto)), leituraLista = pausaRegra(words(depois.cabecalho + ' ' + depois.titulos.join(' ')));
-  relato.fluxo.push({ tela: rotulo, cadeia_assenta_ms: cadeia, leitura_cadeia_ms: leituraCadeia, filtro_responde_ms: filtro, leitura_lista_ms: leituraLista,
-    total_ms: cadeia + leituraCadeia + filtro + leituraLista, ...medida, texto: undefined, ...depois, titulos: undefined });
+  await foto(page, `fluxo-${rotulo}-3-financeiro`, `Fluxo do pitch a ${vp.width}×${vp.height}${proj ? ' em projeção' : ''}: gaveta fechada, de volta ao topo, depois de "Financeiro ${pend.por_dono.Financeiro}"`);
+  const leituraFaixa = pausaRegra(words(antes.texto_faixa)), leituraCadeia = pausaRegra(words(medida.texto)), leituraLista = pausaRegra(words(depois.cabecalho + ' ' + depois.titulos.join(' ')));
+  relato.fluxo.push({ tela: rotulo, ...antes, texto_faixa: undefined, leitura_faixa_ms: leituraFaixa, cadeia_assenta_ms: cadeia, leitura_cadeia_ms: leituraCadeia, filtro_no_topo_sem_rolar: noTopo, filtro_responde_ms: filtro, leitura_lista_ms: leituraLista,
+    total_ms: leituraFaixa + cadeia + leituraCadeia + filtro + leituraLista, ...medida, texto: undefined, ...depois, titulos: undefined });
+  relato.numeros.push({ onde: 'Fluxo ' + rotulo, esperado: 'rolado até "Divergências de taxa": tabela e faixa inteiras na tela antes do clique', ok: antes.faixa_inteira && antes.tabela_inteira });
+  relato.numeros.push({ onde: 'Fluxo ' + rotulo, esperado: 'clique na faixa abre a gaveta da Rota Global e seleciona a linha dela na tabela', ok: medida.gaveta === rota.lojista && medida.linha_selecionada === rota.lojista });
   relato.numeros.push({ onde: 'Fluxo ' + rotulo, esperado: 'dono visível sem rolar a gaveta', ok: medida.dono_visivel_sem_rolar });
-  relato.numeros.push({ onde: 'Fluxo ' + rotulo, esperado: 'gaveta de 440 px sem cobrir a linha clicada', ok: medida.gaveta_px === 440 && !medida.cobre_linha });
+  relato.numeros.push({ onde: 'Fluxo ' + rotulo, esperado: 'gaveta de 440 px sem cobrir a faixa clicada nem a linha selecionada', ok: medida.gaveta_px === 440 && !medida.cobre_linha && !medida.cobre_faixa });
   relato.numeros.push({ onde: 'Fluxo ' + rotulo, esperado: 'números da cadeia a 28 px ou mais, rótulos a 20 px ou mais', ok: medida.menor_numero_px >= 28 && medida.menor_rotulo_px >= 20 });
-  relato.numeros.push({ onde: 'Fluxo ' + rotulo, esperado: `filtro fecha a gaveta e mostra ${pend.por_dono.Financeiro} itens abaixo do cabeçalho`, ok: depois.gaveta_fechada && depois.filtros_abaixo_do_cabecalho && depois.primeiro_item_visivel && depois.itens === pend.por_dono.Financeiro });
+  relato.numeros.push({ onde: 'Fluxo ' + rotulo, esperado: `gaveta fechada; o filtro mostra ${pend.por_dono.Financeiro} itens abaixo do cabeçalho`, ok: depois.gaveta_fechada && depois.filtros_abaixo_do_cabecalho && depois.primeiro_item_visivel && depois.itens === pend.por_dono.Financeiro });
   relato.numeros.push({ onde: 'Fluxo ' + rotulo, esperado: `"${pend.por_dono.Financeiro} pendências de ${pend.quantidade} no mês · Decide: Financeiro" à vista, abaixo do cabeçalho fixo`, ok: depois.contagem_do_filtro_visivel && /Decide: Financeiro/.test(depois.cabecalho) });
   await ctx.close();
 }
@@ -496,6 +581,18 @@ relato.pausas_notas = [];
   const comNotas = async (k) => page.evaluate(([k, de]) => { const P = window.__painel; for (let t = de; t < de + 8000; t += 10) { P.seek(t); if (P.cartaoNotas().notas >= k) return t; } return null; }, [k, M.notas.casa]);
   const t4 = await comNotas(4), t5 = await comNotas(5), t12 = await comNotas(12), t13 = await comNotas(13);
   relato.notas_r3 = { ...M.notas, casa_parada_ms: Math.round(M.notas.varredura[0] - M.notas.casa - M.notas.entrada), com_4_notas: [t4, t5], com_12_notas: [t12, t13] };
+  // defect 03, r4: the frame before the sweep still speaks of the Casa (its pause); from the frame the sweep
+  // starts, at every sweep beat, the batch line, with the gaze on a note the rule stamped
+  relato.notas_r5 = await page.evaluate(([antes, varre]) => {
+    const P = window.__painel, ler = (t) => { P.seek(t); const o = document.getElementById('olhar'); let linha = null; if (!o.classList.contains('oculto')) { const r = o.getBoundingClientRect(); const tr = Array.from(document.querySelectorAll('#mesa-tbody tr')).find((x) => { const b = x.getBoundingClientRect(); return Math.abs(b.top + b.height / 2 - (r.top + r.height / 2)) < b.height / 2; }); linha = tr ? tr.innerText.replace(/\s+/g, ' ') : null; } return { t: Math.round(t), motor: document.getElementById('mesa-motivo').innerText.replace(/\s+/g, ' '), olhar: linha, notas: P.cartaoNotas().notas }; };
+    return { antes: ler(antes), varredura: varre.map((t) => ler(t + 1)) };
+  }, [M.notas.varredura[0] - 1, M.notas.varredura]);
+  {
+    const v = relato.notas_r5;
+    relato.numeros.push({ onde: 'Notas, varredura (defeito 03, r4)', esperado: 'até o quadro anterior à varredura a linha fala da Casa; desde o quadro em que ela começa, em cada batida, "Rotina em lote: feito pela regra." com o olhar numa nota feita pela regra',
+      ok: /Casa do Estudante sem nota/.test(v.antes.motor) && v.varredura.length === 4 && v.varredura.every((x) => /Rotina em lote: feito pela regra\./.test(x.motor) && /Feito pela regra/.test(x.olhar || '') && !/Casa do Estudante/.test(x.olhar || '')),
+      visto: v.varredura.map((x) => (x.t / 1000).toFixed(2) + ' s: ' + (x.olhar || '').slice(0, 24)).join('; ') });
+  }
   await ctx.close();
   const alvos = [['pausa-da-casa', 74900, 'meio da pausa da Casa do Estudante: olhar na linha da Casa, nenhuma nota ainda'],
     ['varredura', 76500, 'varredura das notas, depois da pausa da Casa'],
@@ -524,6 +621,7 @@ relato.pausas_notas = [];
       relato.pausas_notas.push({ tela: nome, velocidade: vel, relogio_ms: Math.round(t), estavel, cartao: ult.texto, olhar: ult.olhar, motor: ult.motor, notas: ult.notas, valor_ok: valorOk, qualificador_ok: qualificador, contagem: c, contagem_fecha: conta });
       relato.numeros.push({ onde: 'Pausa nas Notas ' + nome, esperado: 'cartão exato e com qualificador ("nenhuma nota ainda", "emitindo… (k de 21 notas)" ou "21 notas a emitir"), estável 2 s, contagem que fecha', ok: estavel && valorOk && qualificador && conta });
       if (rot === 'pausa-da-casa') relato.numeros.push({ onde: 'Pausa nas Notas ' + nome, esperado: 'no meio da pausa da Casa, o olhar está na linha da Casa e a linha do motor fala da Casa', ok: /Casa do Estudante/.test(ult.olhar || '') && /Casa do Estudante sem nota/.test(ult.motor) });
+      if (/^como-o-critico/.test(rot)) relato.numeros.push({ onde: 'Pausa nas Notas ' + nome, esperado: 'na varredura e no lote, a linha do motor diz "Rotina em lote: feito pela regra." e não fala da Casa (defeito 03, r4)', ok: /Rotina em lote: feito pela regra\./.test(ult.motor) && !/Casa do Estudante/.test(ult.motor), visto: ult.motor });
       await p2.click('#b-pausa'); // continue to the next target
     }
     await c2.close();
@@ -691,6 +789,14 @@ console.log('tema escuro');
 {
   const { ctx, page } = await abre('escuro', { width: 1440, height: 900 }, { colorScheme: 'dark' });
   await foto(page, '40-escuro-resumo', 'Tema escuro (prefers-color-scheme): Resumo');
+  // r5: the origin strip in the dark theme (finding 14, r4)
+  await mostra(page, '.faixa-titulo');
+  await foto(page, 'r5-escuro-faixa', 'Tema escuro: faixa de origem embaixo da tabela de divergências');
+  const a5 = await page.evaluate(AUDITA_R5);
+  relato.r5.telas.push({ tela: 'escuro', ...a5 });
+  confereR5('escuro', a5);
+  await confere(page, 'Faixa de origem escuro', ESPERADO.faixa, '.faixa-origem');
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
   await page.getByRole('button', { name: rota.lojista, exact: true }).first().click();
   await page.waitForSelector('#gaveta[data-assentado="1"]', { timeout: 10000 });
   await espera(600);
@@ -739,7 +845,7 @@ if (!ARGS.has('--sem-video') && !SO_VIVO) {
   // sweep) and of the return to the Aurora statement before the Pix item, kept for the strips
   fs.rmSync(QUADROS_R3, { recursive: true, force: true }); fs.mkdirSync(QUADROS_R3, { recursive: true });
   const fx = MR3.linhas.find((x) => x.k === 'foco'), pixT = MR3.linhas.find((x) => x.k === 'pend' && x.t > fx.t).t;
-  const tiras = { notas: { de: 72000, ate: 78500, passo: 250, titulo: 'Notas, vídeo em 1x, relógio de 72 a 78,5 s: a pausa da Casa do Estudante e só depois a varredura' },
+  const tiras = { notas: { de: 72000, ate: 80000, passo: 250, titulo: 'Notas, vídeo em 1x, relógio de 72 a 80 s: a pausa da Casa, a varredura com a linha de lote, o lote' },
     extratos: { de: fx.t - 500, ate: pixT + 700, passo: 100, titulo: 'Extratos, vídeo em 1x: fim do lote do Meridiano, a mesa volta à Aurora e só então o Pix entra' } };
   for (const [chave, tira] of Object.entries(tiras)) {
     tira.quadros = [];
@@ -847,7 +953,7 @@ if (SO_VIVO) {
 } else fs.writeFileSync(path.join(SAIDA, 'captura.json'), JSON.stringify(relato, null, 2));
 for (const c of relato.contagens) if (!c.fecha) console.log('  CONTAGEM NÃO FECHA: ' + c.tela + ' ' + JSON.stringify(c));
 if (relato.pausas) console.log(`  pausas: ${relato.pausas.itens} itens, menor sobra ${relato.pausas.menor_sobra_ms} ms; reprodução ${relato.reproducao.duracao_ms} ms`);
-for (const f of relato.fluxo) console.log(`  fluxo ${f.tela}: cadeia ${f.cadeia_assenta_ms} + leitura ${f.leitura_cadeia_ms} + filtro ${f.filtro_responde_ms} + lista ${f.leitura_lista_ms} = ${f.total_ms} ms`);
+for (const f of relato.fluxo) console.log(`  fluxo ${f.tela}: faixa ${f.leitura_faixa_ms} + cadeia ${f.cadeia_assenta_ms} + leitura ${f.leitura_cadeia_ms} + filtro ${f.filtro_responde_ms} + lista ${f.leitura_lista_ms} = ${f.total_ms} ms; faixa ${f.faixa_y}, filtro no topo ${f.filtro_no_topo_sem_rolar}`);
 if (relato.varredura) console.log(`  varredura: ${relato.varredura.amostras} amostras, contagem que não fecha ${relato.varredura.contagem_nao_fecha.length}, parcial sem "fechando…" ${relato.varredura.parcial_sem_fechando.length} (de ${relato.varredura.com_fecho_aberto} com lojista aberto)`);
 for (const x of relato.pausas_fecho || []) console.log(`  ${x.tela} (${x.relogio_ms} ms): ${x.ok ? 'ok' : 'FALHA'} · ${x.textos[x.textos.length - 1]}`);
 for (const x of relato.projecao_rep || []) console.log(`  ${x.tela}: lado a lado ${x.lado_a_lado}, contagem ${x.contagem_visivel}, decisão ${x.primeira_decisao_visivel}, cortadas ${x.celulas_cortadas.length}, selos ${x.selos_cortados}, linhas ${x.linhas_mesa}, motor ${x.linha_do_motor_px} px`);
@@ -859,6 +965,8 @@ for (const x of relato.projecao_r3 || []) console.log(`  ${x.tela}: foco ${x.foc
 if (relato.projecao_r3_relogio) console.log('  projeção 1280, relógio: ' + JSON.stringify({ amostras: relato.projecao_r3_relogio.amostras, com_olhar: relato.projecao_r3_relogio.com_olhar, cortadas: relato.projecao_r3_relogio.cortadas.length, folga_min: relato.projecao_r3_relogio.folga_minima_px, pulos: relato.projecao_r3_relogio.pulos.length }));
 for (const v of ['amostra_1x', 'amostra_2x']) if (relato[v]) console.log(`  ${v}: ${relato[v].quadros} quadros; contagem ${relato[v].contagem_nao_fecha.length}, comissão ${relato[v].comissao_sem_fechando.length}, notas ${relato[v].notas_sem_emitindo.length}, mesa vazia ${relato[v].mesa_vazia_com_impacto.length}`);
 for (const x of (relato.r4 || { telas: [] }).telas) console.log(`  r4 ${x.tela}: ${x.itens} pendências, ${x.que_quebram.length} em duas linhas (${x.que_quebram.join('; ')}); valores ${x.valores_numa_borda}, selos ${x.selos_numa_borda}; faixa ${x.faixa.caixas.length} elos, transborda ${x.faixa.caixa_transborda}`);
+for (const x of (relato.r5 || { telas: [] }).telas) console.log(`  r5 ${x.tela}: bases ${x.faixa.bases.join(' / ')}; operações ${x.faixa.operacoes.px} px, ${x.faixa.operacoes.onde}, separador ${x.faixa.operacoes.separador}; dinheiro ${x.dinheiro.map((c) => c.disposicao).join(', ')}; ponto pendurado ${x.ponto_pendurado} de ${x.titulos_que_quebram.length}`);
+if (relato.notas_r5) console.log('  notas r5: antes ' + relato.notas_r5.antes.motor + ' · varredura ' + relato.notas_r5.varredura.map((x) => x.t + ' ' + x.motor.slice(6, 30)).join(' | '));
 if (relato.video) console.log('  vídeo: ' + JSON.stringify({ parede: relato.video.reproducao_parede_ms, qps: relato.video.quadros_por_segundo_capturados, maior: relato.video.maior_intervalo_ms }));
 const falhas = relato.numeros.filter((n) => !n.ok);
 console.log(`\n${relato.telas.length} telas · console: ${relato.console.length ? relato.console.length + ' mensagens' : 'sem erros nem avisos'} · números: ${relato.numeros.length - falhas.length}/${relato.numeros.length} · linguagem do motor na camada principal: ${relato.proibido.length} · rolagem lateral: ${relato.rolagem_lateral.length}`);
