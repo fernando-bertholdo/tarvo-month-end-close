@@ -14,12 +14,14 @@ Usage (from the repository root):
 from __future__ import annotations
 
 import csv
+import datetime
 import email
 import io
 import json
 import logging
 import re
 import sys
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -36,6 +38,12 @@ OUTPUT_FILES = {
 }
 VALUE_COLUMN = {"comissoes": "comissao_brl", "divergencias": "diferenca_brl", "notas": "valor_brl",
                 "lancamentos": "valor", "pendencias": "valor_brl"}
+# Ponte sheet columns the page cannot show as they came: dates are Excel serials and the spread is a
+# fraction. The export hands them over converted, next to the cells, so the page only formats.
+PONTE_DATE_COLUMNS = ("Data Contratação", "Data Liquidação")
+PONTE_PERCENT_COLUMNS = ("Spread %",)
+EXCEL_EPOCH = datetime.date(1899, 12, 30)  # day 0 of the 1900 date system, as Excel counts it
+PERCENT = Decimal(100)
 
 
 def _embed(payload) -> str:
@@ -172,16 +180,69 @@ def _ponte_eml(path: Path) -> dict:
     if header is None:
         return {"tipo": "xlsx", "anexo": att.get_filename(), "aba": sheet_name, "linhas": {}, "ordem": []}
     letters = [k for k in header if k != "_row"]
+    names = [header[k] for k in letters]
     out: dict[str, list] = {}
     order = []
     for r in rows:
         op = r.get("A", "")
         if op.startswith("PC-"):
-            out.setdefault(op, []).append([int(r["_row"]), [r.get(k, "") for k in letters]])
+            cells = [r.get(k, "") for k in letters]
+            out.setdefault(op, []).append([int(r["_row"]), cells, _ponte_converted(names, cells)])
             order.append(op)
     return {"tipo": "xlsx", "anexo": att.get_filename(), "aba": sheet_name,
-            "cabecalho": [header[k] for k in letters], "linha_cabecalho": int(header["_row"]),
+            "cabecalho": names, "linha_cabecalho": int(header["_row"]),
             "linhas": out, "ordem": order}
+
+
+def _ponte_converted(names: list[str], cells: list[str]) -> dict:
+    """Dates in ISO and the spread in percent points, keyed by column; unreadable cells are left out."""
+    by_name = dict(zip(names, cells))
+    converted: dict = {}
+    for name in PONTE_DATE_COLUMNS:
+        iso = excel_date_iso(by_name.get(name, ""))
+        if iso is not None:
+            converted[name] = iso
+    for name in PONTE_PERCENT_COLUMNS:
+        points = fraction_to_percent(by_name.get(name, ""))
+        if points is not None:
+            converted[name] = points
+    return converted
+
+
+def excel_date_iso(value: str) -> str | None:
+    """An Excel serial date ("46269") as ISO ("2026-09-04"); None when the cell is not a serial.
+
+    Args:
+        value: the cell as the sheet reader returns it.
+
+    Returns:
+        The date in ISO 8601, or None for an empty or non-numeric cell.
+    """
+    try:
+        days = int(Decimal(str(value).strip()))
+    except (InvalidOperation, ValueError, OverflowError):
+        return None
+    return (EXCEL_EPOCH + datetime.timedelta(days=days)).isoformat()
+
+
+def fraction_to_percent(value: str) -> float | None:
+    """A fraction cell ("0.015007") in percent points (1.5007), exact to the digits of the cell.
+
+    Decimal moves the point without binary noise, so the JSON carries 1.5007, not 1.5006999999.
+
+    Args:
+        value: the cell as the sheet reader returns it.
+
+    Returns:
+        The value times 100, or None for an empty or non-numeric cell.
+    """
+    try:
+        points = Decimal(str(value).strip()) * PERCENT
+    except InvalidOperation:
+        return None
+    if not points.is_finite():
+        return None
+    return float(points.normalize())
 
 
 def _rate_sheet(path: Path) -> dict:
