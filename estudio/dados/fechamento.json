@@ -1,0 +1,297 @@
+{
+  "gerado_de": {
+    "arquivo": "relatorio/execucao.json"
+  },
+  "executado_em": "2026-10-19T01:19:42Z",
+  "duracao_s": {
+    "valor": 0.06,
+    "fonte": {
+      "arquivo": "relatorio/execucao.json"
+    }
+  },
+  "arquivos": [
+    {
+      "arquivo": "01_orbe_relatorio_comissoes_set2026.csv",
+      "linhas": 1943
+    },
+    {
+      "arquivo": "06_orbe_ajustes_tardios_set2026.csv",
+      "linhas": 14
+    },
+    {
+      "arquivo": "02_tabela_taxas_contratadas.xlsx",
+      "linhas": 43
+    },
+    {
+      "arquivo": "03_email_ponte_cambio_relatorio_set2026.eml",
+      "linhas": 233
+    },
+    {
+      "arquivo": "04_plano_de_contas_fenix_erp.csv",
+      "linhas": 52
+    },
+    {
+      "arquivo": "05a_extrato_banco_aurora_cc4471_set2026.csv",
+      "linhas": 84
+    },
+    {
+      "arquivo": "05b_extrato_banco_meridiano_cc90233_set2026.ofx",
+      "linhas": 100
+    }
+  ],
+  "regras_escritas": {
+    "valor": 61,
+    "fonte": {
+      "arquivo": "REGRAS.md",
+      "nota": "códigos F e L distintos"
+    }
+  },
+  "regras_do_financeiro": {
+    "valor": 60,
+    "fonte": {
+      "arquivo": "REGRAS.md",
+      "nota": "códigos F distintos: respostas do financeiro no canal do case"
+    }
+  },
+  "eventos": {
+    "total": 2507,
+    "decisoes": 2463,
+    "por_peso": {
+      "rotina": 2332,
+      "atencao": 116,
+      "excecao": 15
+    },
+    "por_frente": {
+      "CHECKOUT": 1992,
+      "PENDENCIAS": 7,
+      "REMESSA": 257,
+      "NOTAS": 23,
+      "EXTRATOS": 184
+    },
+    "por_etapa": {
+      "CHECKOUT": 1996,
+      "REMESSA": 257,
+      "NOTAS": 23,
+      "EXTRATOS": 187
+    },
+    "nota_por_etapa": "PENDENCIAS do motor redistribuída pela etapa do arquivo de origem; é a contagem que o painel mostra",
+    "por_metodo": {
+      "REGRA": 2448,
+      "HUMANO": 15
+    },
+    "fonte": {
+      "arquivo": "relatorio/eventos.jsonl"
+    }
+  },
+  "comissao": {
+    "checkout": 203735.34,
+    "remessa": 39543.45,
+    "fonte": {
+      "arquivo": "relatorio/execucao.json"
+    }
+  },
+  "notas": {
+    "quantidade": 21,
+    "total_brl": 243284.29,
+    "fonte": {
+      "arquivo": "saida/notas_a_emitir.csv"
+    }
+  },
+  "lancamentos": {
+    "quantidade": 184,
+    "por_banco": {
+      "AURORA": 84,
+      "MERIDIANO": 100
+    },
+    "por_metodo": {
+      "REGRA": 184
+    },
+    "fonte": {
+      "arquivo": "saida/lancamentos_classificados.csv"
+    }
+  },
+  "rastro_um_numero": {
+    "lojista": "Rota Global Intercâmbio Ltda",
+    "data_venda": "12/09/2026",
+    "valor_bruto": 6449.1,
+    "parcelas": 8,
+    "taxa_contratada_pct": 3.59,
+    "taxa_aplicada_pct": 4.09,
+    "diferenca_brl": 32.25,
+    "vendas_com_divergencia": 87,
+    "operacoes_com_divergencia": 87,
+    "operacoes_por_causa": {
+      "taxa aplicada diferente do contrato": 83,
+      "estorno de venda com taxa errada": 4
+    },
+    "nota_operacoes": "as 87 operações são vendas e estornos; não dizer 87 vendas",
+    "total_a_cobrar_brl": 1546.28,
+    "quem_decide": "Financeiro",
+    "linha_origem_texto": "TX88423890;12/09/2026;1074504011;ROTA GLOBAL INTERCAMBIO;VENDA;CREDITO PARCELADO;8;ELO;6449,10;4,09;263,76;6185,34;;",
+    "fontes": {
+      "divergencia": {
+        "arquivo": "saida/divergencias_taxa.csv",
+        "linha": 2
+      },
+      "linha_origem": {
+        "arquivo": "dados/01_orbe_relatorio_comissoes_set2026.csv",
+        "linha": 727
+      },
+      "pendencia": {
+        "arquivo": "saida/pendencias.csv",
+        "linha": 2
+      }
+    }
+  },
+  "dinheiro_em_jogo": {
+    "taxa_acima_do_contrato": {
+      "total": 2995.11,
+      "cobrar_orbe": 1576.23,
+      "contestar_ponte": 1418.88,
+      "fonte": {
+        "arquivo": "relatorio/execucao.json"
+      }
+    },
+    "devolver_casa_do_estudante": {
+      "valor": 15396.77,
+      "fonte": {
+        "arquivo": "saida/pendencias.csv",
+        "linha": 4
+      }
+    },
+    "atlas": {
+      "bruto_lancamentos": 262138.61,
+      "lancamentos": 57,
+      "vendas": 49,
+      "bruto_vendas": 135428.9,
+      "taxa_estimada": 7876.05,
+      "fonte_bruto": {
+        "arquivo": "saida/pendencias.csv",
+        "linha": 5,
+        "nota": "soma das 57 linhas, não só vendas"
+      },
+      "fonte_taxa": {
+        "arquivo": "dados/01_orbe_relatorio_comissoes_set2026.csv",
+        "nota": "soma de valor_taxa das linhas do EC 1076801732; estimativa, faturada em outubro"
+      }
+    }
+  },
+  "pendencias": {
+    "quantidade": 15,
+    "por_dono": {
+      "Financeiro": 12,
+      "Comercial": 2,
+      "Tesouraria": 1
+    },
+    "itens": [
+      {
+        "id": "PEN-0001",
+        "tipo": "DIVERGENCIA_ORBE",
+        "valor_brl": 1546.28,
+        "quem_decide": "Financeiro",
+        "motivo": "Rota Global Intercâmbio Ltda: contestar com a Orbe a taxa acima do contrato (valor pela fórmula, F11) e ressarcir o lojista pelo descontado de fato, R$ 1545.86 (F2, F58, F63, F72)"
+      },
+      {
+        "id": "PEN-0002",
+        "tipo": "DIVERGENCIA_ORBE",
+        "valor_brl": 29.95,
+        "quem_decide": "Financeiro",
+        "motivo": "Bridge Idiomas (NOVA): contestar com a Orbe a taxa acima do contrato (valor pela fórmula, F11) e ressarcir o lojista pelo descontado de fato, R$ 29.94 (F2, F58, F63, F72)"
+      },
+      {
+        "id": "PEN-0003",
+        "tipo": "DEVOLUCAO_LOJISTA",
+        "valor_brl": 15396.77,
+        "quem_decide": "Comercial",
+        "motivo": "Casa do Estudante: isenção set-dez não informada à Orbe, devolver ao lojista o que foi descontado, fora da cobrança da Orbe (F37, F72)"
+      },
+      {
+        "id": "PEN-0004",
+        "tipo": "SEM_CONTRATO",
+        "valor_brl": 262138.61,
+        "quem_decide": "Comercial",
+        "motivo": "Atlas Idiomas (EC 1076801732, CNPJ 39566044000119): sem taxa contratada, não faturar até o comercial confirmar, faturar setembro com outubro (F7, F44, F67). Valor = bruto transacionado"
+      },
+      {
+        "id": "PEN-0005",
+        "tipo": "OPERACAO_REPETIDA",
+        "valor_brl": 821.88,
+        "quem_decide": "Financeiro",
+        "motivo": "Nº Operação repetido no relatório da Ponte: contado uma vez (F18, F103)"
+      },
+      {
+        "id": "PEN-0006",
+        "tipo": "SPREAD_NEGATIVO",
+        "valor_brl": -687.52,
+        "quem_decide": "Financeiro",
+        "motivo": "spread negativo do relatório R$ -687.52, diferença até o contrato R$ 1351.87 (spread contratado R$ 664.35), fora da comissão e da nota, contestar com a Ponte (F17, F65)"
+      },
+      {
+        "id": "PEN-0007",
+        "tipo": "SPREAD_NEGATIVO",
+        "valor_brl": -509.22,
+        "quem_decide": "Financeiro",
+        "motivo": "spread negativo do relatório R$ -509.22, diferença até o contrato R$ 1001.29 (spread contratado R$ 492.07), fora da comissão e da nota, contestar com a Ponte (F17, F65)"
+      },
+      {
+        "id": "PEN-0008",
+        "tipo": "SPREAD_NEGATIVO",
+        "valor_brl": -292.28,
+        "quem_decide": "Financeiro",
+        "motivo": "spread negativo do relatório R$ -292.28, diferença até o contrato R$ 574.91 (spread contratado R$ 282.63), fora da comissão e da nota, contestar com a Ponte (F17, F65)"
+      },
+      {
+        "id": "PEN-0009",
+        "tipo": "SPREAD_NEGATIVO",
+        "valor_brl": -345.03,
+        "quem_decide": "Financeiro",
+        "motivo": "spread negativo do relatório R$ -345.03, diferença até o contrato R$ 637.91 (spread contratado R$ 292.88), fora da comissão e da nota, contestar com a Ponte (F17, F65)"
+      },
+      {
+        "id": "PEN-0010",
+        "tipo": "DIVERGENCIA_PONTE",
+        "valor_brl": 1418.88,
+        "quem_decide": "Financeiro",
+        "motivo": "Mundo Aberto: contestar com a Ponte o spread acima do contratado, o lojista é ressarcido (F14, F15, F63)"
+      },
+      {
+        "id": "PEN-0011",
+        "tipo": "SALDO_NAO_POSITIVO",
+        "valor_brl": -5.5,
+        "quem_decide": "Financeiro",
+        "motivo": "Casa do Estudante Viagens Ltda: comissão do mês zero ou negativa, não emite nota e o negativo não passa ao mês seguinte (F5, F68)"
+      },
+      {
+        "id": "PEN-0012",
+        "tipo": "CONFERIR_REPASSE",
+        "valor_brl": 39543.45,
+        "quem_decide": "Financeiro",
+        "motivo": "conferir o crédito da Ponte de 06/10 contra a nota, diferença vira pendência com a contestação (F35, F103)"
+      },
+      {
+        "id": "PEN-0013",
+        "tipo": "CREDITO_NAO_IDENTIFICADO",
+        "valor_brl": 7350.0,
+        "quem_decide": "Financeiro",
+        "motivo": "Pix recebido sem identificação: identificar o pagador com o banco até o fechamento de outubro (F25, F97)"
+      },
+      {
+        "id": "PEN-0014",
+        "tipo": "REPASSE_DEVOLVIDO",
+        "valor_brl": 12400.0,
+        "quem_decide": "Financeiro",
+        "motivo": "repasse à Mundo Aberto voltou, motivo desconhecido: confirmar com o lojista e repagar (F26)"
+      },
+      {
+        "id": "PEN-0015",
+        "tipo": "TRANSFERENCIA_EM_TRANSITO",
+        "valor_brl": -300000.0,
+        "quem_decide": "Tesouraria",
+        "motivo": "transferência ao Meridiano sem entrada em setembro: conferir no extrato de outubro, se não aparecer, tesouraria (F27, F99)"
+      }
+    ],
+    "fonte": {
+      "arquivo": "saida/pendencias.csv"
+    }
+  }
+}
