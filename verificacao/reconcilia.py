@@ -43,6 +43,9 @@ SEM_CADASTRO = {"1043300981": "Novo Horizonte Intercambio", "1043396662": "Horiz
                 "1038867654": "Kiwi Experience"}  # F6: EC without registration -> sheet name
 SPREAD_PADRAO = Decimal("0.015")  # F16
 TOLERANCIA_SPREAD = Decimal("0.0005")  # F22: 0,05 pp
+COLUNAS_ORBE = ("id_transacao", "data_movimento", "cod_estabelecimento", "nome_estabelecimento",
+                "tipo_lancamento", "modalidade", "qtd_parcelas", "valor_bruto", "taxa_aplicada_pct",
+                "valor_taxa", "id_referencia", "data_venda_original")  # F71: other columns, missing file
 VALOR = {"comissoes_por_lojista.csv": "comissao_brl", "divergencias_taxa.csv": "diferenca_brl",
          "notas_a_emitir.csv": "valor_brl", "lancamentos_classificados.csv": "valor",
          "pendencias.csv": "valor_brl"}
@@ -105,14 +108,21 @@ def um(pasta: Path, prefixo: str):
 
 
 def orbe(pasta: Path) -> list:
-    """Lines of 01 and then 06; a 06 id already in 01 is left out (F76)."""
+    """Lines of 01 and then 06; a 06 id already in 01 is left out (F76).
+
+    A file missing or with other columns is out (F71); without the 01, the 06 is out too: late
+    adjustments only make sense on top of the main report (F76).
+    """
     linhas, vistos = [], set()
     for prefixo in ("01_", "06_"):
         f = um(pasta, prefixo)
-        if f is None:
+        texto = f.read_bytes().decode("utf-8-sig", errors="replace") if f else ""
+        leitor = csv.DictReader(texto.splitlines(), delimiter=";")
+        if f is None or any(c not in (leitor.fieldnames or []) for c in COLUNAS_ORBE):
+            if prefixo == "01_":
+                return []
             continue
-        texto = f.read_bytes().decode("utf-8-sig", errors="replace")
-        for r in csv.DictReader(texto.splitlines(), delimiter=";"):
+        for r in leitor:
             if r.get("id_transacao") and r["id_transacao"] not in vistos:
                 vistos.add(r["id_transacao"])
                 linhas.append(r)
@@ -120,7 +130,9 @@ def orbe(pasta: Path) -> list:
 
 
 def contratos(pasta: Path) -> list:
-    folha = xlsx(um(pasta, "02_").read_bytes())["Taxas vigentes"]
+    """Rows of the current tab; none without the sheet or the tab (F71)."""
+    f = um(pasta, "02_")
+    folha = xlsx(f.read_bytes()).get("Taxas vigentes", []) if f else []
     out = []
     for c in folha:
         if not c.get("A") or not c.get("B") or c.get("A") == "Lojista":
@@ -145,16 +157,25 @@ def contratos(pasta: Path) -> list:
 
 
 def ponte(pasta: Path) -> list:
-    msg = email.message_from_bytes(um(pasta, "03_").read_bytes())
-    anexo = next(p for p in msg.walk() if (p.get_filename() or "").endswith(".xlsx"))
-    linhas = next(iter(xlsx(anexo.get_payload(decode=True)).values()))
-    cab = next(r for r in linhas if r.get("A") == "Nº Operação")
+    """Operations of the e-mail attachment; none without the file, the attachment or the header (F71)."""
+    f = um(pasta, "03_")
+    if f is None:
+        return []
+    msg = email.message_from_bytes(f.read_bytes())
+    anexo = next((p for p in msg.walk() if (p.get_filename() or "").endswith(".xlsx")), None)
+    linhas = next(iter(xlsx(anexo.get_payload(decode=True)).values())) if anexo else []
+    cab = next((r for r in linhas if r.get("A") == "Nº Operação"), None)
+    if cab is None:
+        return []
     col = {v: k for k, v in cab.items()}
+    obs = col.get("Observação", "P")
     out = []
     for r in linhas:
         if (r.get("A") or "").startswith("PC-"):
-            out.append({n: r.get(col[n], "") for n in ("Nº Operação", "CNPJ Cliente", "Valor ME",
-                                                        "PTAX Ref.", "Spread R$", "Spread %")})
+            o = {n: r.get(col[n], "") for n in ("Nº Operação", "CNPJ Cliente", "Valor ME", "PTAX Ref.",
+                                                "Spread R$", "Spread %")}
+            o["Observação"] = r.get(obs, "") or ""
+            out.append(o)
     return out
 
 
@@ -187,6 +208,8 @@ def coluna(r: dict) -> str:
 def checkout(linhas: list, tabela: list) -> dict:
     """Commission per CNPJ (F1/F30), divergence per line (F11) and the Casa refund (F72)."""
     com, div, casa, atlas, atlas_taxa = defaultdict(lambda: ZERO), {}, ZERO, ZERO, ZERO
+    if not tabela:  # F71: no contracted rate without the sheet; the lines go to a pendência
+        linhas = []
     for r in linhas:
         ec, bruto = r["cod_estabelecimento"].strip(), br(r["valor_bruto"])
         if ec == ATLAS_EC:
@@ -226,10 +249,15 @@ def remessa(ops: list, tabela: list) -> dict:
             continue
         vistos.add(op)
         spread = r2(Decimal(o["Spread R$"]))
+        cnpj = so_digitos(o["CNPJ Cliente"])
+        if "AJUSTE REF" in (o.get("Observação") or "").upper():  # F69: half, whatever the sign
+            com[cnpj] += r2(spread / 2)
+            continue
         if spread < 0:  # F17/F65: out of commission and note
             continue
-        cnpj = so_digitos(o["CNPJ Cliente"])
         com[cnpj] += r2(spread / 2)
+        if not tabela:  # F71: the contracted spread is unknown without the sheet
+            continue
         c = [c for c in tabela if c["cnpj"] == cnpj]
         contratado = c[-1]["J"] if c and c[-1]["J"] is not None else SPREAD_PADRAO
         me, ptax = Decimal(o["Valor ME"]), Decimal(o["PTAX Ref."])
@@ -275,7 +303,8 @@ def parciais(ok: Conferencia, eventos: list, resumo: dict) -> None:
                 fora.append(e["id_saida"])
         ok.igual(f"{frente}: cada soma corrida é a soma dos lojistas já fechados", [], fora)
         fim = [Decimal(str(e["valor"])) for e in totais if e.get("escopo") == "frente" and e["frente"] == frente]
-        ok.igual(f"{frente}: soma dos lojistas = total da frente = resumo", [corrido] * 2,
+        # a front with no merchant emits no front total (nothing closed)
+        ok.igual(f"{frente}: soma dos lojistas = total da frente = resumo", [corrido] * (2 if lojistas else 1),
                  fim + [Decimal(str(resumo["comissao_" + frente.lower()]))])
     notas = [e for e in eventos if e["tipo"] == "decisao" and e["resultado"] == "nota"]
     ok.igual("notas: a última soma corrida é o total das notas",

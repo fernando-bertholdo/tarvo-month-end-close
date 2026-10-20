@@ -297,6 +297,8 @@ class Close:
             for row in book.get("ANTIGO 2025 - nao usar", [])[1:]:
                 if row.get("A"):
                     self.old_cnpj[norm(row["A"])] = cnpj14(row.get("B"))
+            if "Taxas vigentes" in book and not self.contracts:
+                self.warn(f"{f02.name}: nenhum contrato lido da aba 'Taxas vigentes'; checkout e divergências de spread bloqueados (F71).")
         else:
             self.warn("Arquivo 02 (taxas) ausente: checkout e divergências de spread bloqueados; a comissão de remessa sai do spread realizado (F71).")
         self.ponte = []
@@ -320,7 +322,11 @@ class Close:
             self.warn("Arquivo 05a (Aurora) ausente: lançamentos do Aurora bloqueados (F71).")
         if not self.f05b:
             self.warn("Arquivo 05b (Meridiano) ausente: lançamentos do Meridiano bloqueados e transferências do Aurora sem conferência (F71).")
-        self.statements = self.statement_lines()  # read with the other files: stage LEITURA
+        try:  # read with the other files (stage LEITURA); a bad line stops the statements only (F71)
+            self.statements = self.statement_lines()
+        except Exception as exc:
+            self.statements = []
+            self.warn(f"bloco extratos interrompido: {type(exc).__name__}: {exc}")
         self.competencia, self.competencia_seguinte = self.month_of_close()
 
     @staticmethod
@@ -328,8 +334,22 @@ class Close:
         return MESES[int(mm_aaaa[:2]) - 1] if mm_aaaa else "o mês do fechamento"
 
     def month_of_close(self):
-        """MM/AAAA of the close: the most common month of the Orbe and Ponte dates, and the next one."""
-        months = Counter((d.month, d.year) for d in [date_br(r["data_movimento"]) for r in self.orbe] + [p["data"] for p in self.ponte] if d)
+        """MM/AAAA of the close and of the next month.
+
+        The most common month of the Orbe and Ponte dates; without them, of the statement dates.
+        A date that does not parse is skipped here and left to the block that reads its line.
+        """
+        def month(s):
+            try:
+                d = date_br(s)
+            except ValueError:
+                return None
+            return (d.month, d.year) if d else None
+
+        months = Counter(m for m in [month(r["data_movimento"]) for r in self.orbe] if m)
+        months.update((p["data"].month, p["data"].year) for p in self.ponte)
+        if not months:
+            months.update((ln["data"].month, ln["data"].year) for ln in self.statements)
         if not months:
             return "", ""
         (m, y), _ = months.most_common(1)[0]
@@ -418,14 +438,18 @@ class Close:
         if blocked:
             by_file = OrderedDict()
             for r in self.orbe:
-                by_file.setdefault(r["_arquivo"], []).append(r)
-            why = "linhas da Orbe sem a planilha de taxas (02): checkout fora do cálculo até a planilha chegar; rodar o fechamento de novo (F71). Valor = bruto transacionado"
+                if not r.get("_dup"):  # a repeat is its own pendência (F76), out of the file's gross
+                    by_file.setdefault(r["_arquivo"], []).append(r)
+            why = "linhas da Orbe sem taxa contratada (planilha 02 ausente ou sem contrato): checkout fora do cálculo até a planilha chegar; rodar o fechamento de novo (F71). Valor = bruto transacionado"
             self.orbe_blocked = [(f, rows, why) for f, rows in by_file.items()] + self.orbe_blocked
         for arq, rows, why in self.orbe_blocked:
             vals = [(r["id_transacao"], dec_br(r["valor_bruto"])) for r in rows]
             self.pend("DEPENDENCIA_AUSENTE", [v[0] for v in vals], sum((v[1] for v in vals), Decimal("0")),
                       why, "Financeiro", arq, regra="F71", rastro_vals=vals)
         if blocked:
+            for r in self.orbe:
+                if r.get("_dup"):
+                    self.repeated(r)
             return
         per = OrderedDict()
         casa_lines, atlas_lines, unknown = [], [], defaultdict(list)
@@ -433,7 +457,7 @@ class Close:
         for r in self.orbe:
             ref, arq = r["id_transacao"], r["_arquivo"]
             if r.get("_dup"):
-                self.pend("AJUSTE_REPETIDO", [ref], dec_br(r["valor_bruto"]), "id_transacao do ajuste repete o relatório principal; critério do time: fora do cálculo até a Helena confirmar (F76)", "Financeiro", arq, regra="F76")
+                self.repeated(r)
                 continue
             ec, tipo = r["cod_estabelecimento"].strip(), r["tipo_lancamento"]
             bruto, taxa_orbe = dec_br(r["valor_bruto"]), dec_br(r["valor_taxa"])
@@ -529,6 +553,10 @@ class Close:
         for ec, lines in unknown.items():
             tot = sum((l[1] for l in lines), Decimal("0"))
             self.pend("SEM_CADASTRO", [l[0] for l in lines], tot, f"EC {ec} ({lines[0][3]}) sem linha vigente na planilha de taxas", "Comercial", lines[0][2], regra="F71", rastro_vals=[(l[0], l[1]) for l in lines])
+
+    def repeated(self, r):
+        """F76: a late adjustment that repeats the main report stays out until Helena confirms."""
+        self.pend("AJUSTE_REPETIDO", [r["id_transacao"]], dec_br(r["valor_bruto"]), "id_transacao do ajuste repete o relatório principal; critério do time: fora do cálculo até a Helena confirmar (F76)", "Financeiro", r["_arquivo"], regra="F76")
 
     # ------------------------------------------------------------ remessa
     def remessa(self):
@@ -805,7 +833,8 @@ class Close:
             "comissao_total": sum((Decimal(c[4]) for c in self.comissoes), Decimal("0")),
             "lojistas": {ln: sum(c[3] == ln for c in self.comissoes) for ln in ("CHECKOUT", "REMESSA")},
             "notas_por_linha": {ln: sum(n[3] == ln for n in self.notas) for ln in ("CHECKOUT", "REMESSA")},
-            "notas_menos_comissao": getattr(self, "notas_menos_comissao", Decimal("0")),
+            # what no note carries: merchants at zero or below (F5); also when no note exists
+            "notas_menos_comissao": sum((Decimal(n[4]) for n in self.notas), Decimal("0")) - sum((Decimal(c[4]) for c in self.comissoes), Decimal("0")),
             "divergencias_operacoes": {ln: sum(d[2] == ln for d in self.divergencias) for ln in ("CHECKOUT", "REMESSA")},
             "atlas_estimativa": getattr(self, "atlas_estimativa", Decimal("0")),
             "pendencias_por_dono": dict(self.por_dono),
@@ -825,9 +854,11 @@ def run_close(month_dir, out_dir="saida", report_dir="relatorio", emit=None) -> 
     c = Close(month_dir, out_dir, report_dir, emit)
     c.buffer = []
     inicio = c.ev("inicio", fonte={"arquivo": str(month_dir), "ref": ""}, motivo="fechamento iniciado")
-    c.load()
-    inicio.update(competencia=c.competencia, competencia_seguinte=c.competencia_seguinte)
-    c.flush("LEITURA")
+    try:
+        c.load()
+        inicio.update(competencia=c.competencia, competencia_seguinte=c.competencia_seguinte)
+    finally:  # what was read reaches the screen even if reading fails
+        c.flush("LEITURA")
     for etapa, block in (("CHECKOUT", c.checkout), ("REMESSA", c.remessa), ("NOTAS", c.notas_fiscais), ("EXTRATOS", c.extratos)):
         c.buffer = []
         try:

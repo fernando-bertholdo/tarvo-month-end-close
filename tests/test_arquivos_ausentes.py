@@ -90,7 +90,7 @@ class Sem01(Base):
 
 
 class Layout01Mudou(Sem01):
-    """01 present with a column renamed: same as missing for the 06 (finding of 17/10 18h33)."""
+    """01 present with a column renamed: same as missing for the 06 (finding of 17/10, 18:33 BRT)."""
     sem = ()
 
     @classmethod
