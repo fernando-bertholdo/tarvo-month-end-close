@@ -1,0 +1,49 @@
+{
+  "executado_em": "2026-10-17T21:14:40Z",
+  "pasta": "dados",
+  "arquivos": [
+    {
+      "arquivo": "01_orbe_relatorio_comissoes_set2026.csv",
+      "linhas": 1943
+    },
+    {
+      "arquivo": "06_orbe_ajustes_tardios_set2026.csv",
+      "linhas": 14
+    },
+    {
+      "arquivo": "02_tabela_taxas_contratadas.xlsx",
+      "linhas": 43
+    },
+    {
+      "arquivo": "03_email_ponte_cambio_relatorio_set2026.eml",
+      "linhas": 233
+    },
+    {
+      "arquivo": "04_plano_de_contas_fenix_erp.csv",
+      "linhas": 52
+    },
+    {
+      "arquivo": "05a_extrato_banco_aurora_cc4471_set2026.csv",
+      "linhas": 84
+    },
+    {
+      "arquivo": "05b_extrato_banco_meridiano_cc90233_set2026.ofx",
+      "linhas": 100
+    }
+  ],
+  "avisos": [],
+  "resumo": {
+    "comissao_checkout": 203735.34,
+    "comissao_remessa": 39543.45,
+    "divergencias_brl": 2995.11,
+    "divergencia_orbe": 1576.23,
+    "divergencia_ponte": 1418.88,
+    "devolucao_casa": 15396.77,
+    "atlas_bruto_sem_faturar": 262138.61,
+    "notas_brl": 243284.29,
+    "notas": 21,
+    "pendencias": 15,
+    "lancamentos": 184,
+    "duracao_s": 0.07
+  }
+}

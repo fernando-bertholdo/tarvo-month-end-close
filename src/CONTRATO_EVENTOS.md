@@ -21,9 +21,41 @@ Uma linha JSON por evento, em UTF-8, na ordem em que o motor decide. A página e
 | `id_saida` | texto ou vazio | `decisao`, `total` | liga ao `id_saida` dos CSVs de `saida/` |
 | `confianca` | número 0 a 1 | `metodo` = `IA` | declarada pelo modelo |
 | `modelo`, `porta` | texto | `metodo` = `IA` | modelo e porta (`api`, `claude-code`, `cache`) |
-| `linhas` | int | `arquivo` | linhas lidas do arquivo |
+| `linhas` | int | `arquivo` | linhas lidas do arquivo; na planilha de taxas, só a aba vigente |
+| `linhas_no_arquivo` | int | `arquivo` da planilha | linhas de todas as abas |
+| `competencia`, `competencia_seguinte` | `MM/AAAA` | `inicio` | mês do fechamento (o mais comum nas datas da Orbe e da Ponte) e o seguinte |
+| `etapa` | `LEITURA`, `CHECKOUT`, `REMESSA`, `NOTAS`, `EXTRATOS` | todos, menos `fim` | etapa que emitiu o evento; pendência leva a etapa que a abriu |
+| `escopo` | `lojista` ou `frente` | `total` | `lojista`: comissão de um lojista; `frente`: total da frente fechada. Uma `decisao` é um item; o `fim` é o mês |
+| `parcial` | objeto | ver abaixo | valores corridos, prontos para a tela, por escopo |
+| `n_linhas` | int | `total` lojista, nota, pendência | linhas de origem que o número soma |
+| `n_lojistas` | int | `total` frente do checkout e da remessa | lojistas com comissão na frente |
+| `n_notas`, `notas_por_linha`, `notas_menos_comissao` | int, objeto, número | `total` frente das notas | quantas notas, quantas por linha de negócio, e o que as notas somam além da comissão (lojistas a zero ou abaixo, F5) |
+| `n_lancamentos`, `por_metodo` | int, objeto | `total` frente dos extratos | lançamentos classificados e quantos por `metodo` |
+| `emite_nota` | bool | `total` lojista do checkout | falso quando a comissão é zero ou negativa (F5) |
+| `base` | número | divergência | valor sobre o qual a diferença de taxa incide: bruto da linha (checkout, F11) ou Valor ME × PTAX Ref. (remessa, F15/F95); também `base_brl` em `divergencias_taxa.csv` |
+| `taxa_contratada_pct`, `taxa_aplicada_pct`, `diferenca_pp` | número, em % | divergência; `taxa_contratada_pct` também na comissão do checkout | as duas taxas e a diferença em pontos |
+| `pendencia` | texto | divergência | `id_saida` da pendência que cobra o grupo |
+| `tipo_pendencia` | texto | pendência | o `tipo` de `pendencias.csv` |
+| `por_tipo` | objeto | pendência da Orbe | linhas por `tipo_lancamento` (ex.: `{"VENDA": 83, "ESTORNO": 4}`) |
+| `ressarcimento` | número | `DIVERGENCIA_ORBE` | o que a Orbe descontou a mais de fato, a devolver ao lojista (F72) |
+| `estimativa` | `{valor, mil}` | `SEM_CONTRATO` | taxa que a Orbe descontou; referência, nunca faturada (F7) |
 
-Evento `fim` traz `resumo`: objeto com os totais do mês (`comissao_checkout`, `comissao_remessa`, `divergencias_brl`, `notas_brl`, `pendencias`, `lancamentos`, `duracao_s`).
+### `parcial`
+
+Cada chave é o escopo em que o valor corre. A página exibe; não soma nem conta.
+
+| Chave | Em | Campos |
+|---|---|---|
+| `etapa` | toda `decisao`; `arquivo` | `k` de `n` decisões da etapa, e `regra`, `sinalizadas`, `pessoa` (por `peso`: `rotina`, `atencao`, `excecao`), sempre com `k` = a soma dos três; no `arquivo`, `k` de `n` arquivos |
+| `grupo` | divergência | `k` de `n` divergências da mesma pendência e a soma corrida `valor` |
+| `frente` | `total` lojista; nota | `k` de `n` lojistas (ou notas) da frente e a soma corrida `valor` |
+| `mes` | `total` lojista | `comissao`: checkout e remessa corridos |
+| `mes` | divergência | `divergencias`: contagem corrida do mês |
+| `mes` | pendência | `pendencias` (contagem corrida), `por_dono` e `em_jogo` (`acima_do_contrato`, `orbe`, `ponte`, `devolver_casa`, `atlas_estimativa`), corridos |
+
+O motor segura os eventos de cada etapa até ela terminar, para que todo evento já saiba o `n`. Ao vivo, os eventos chegam por etapa. Uma etapa leva milissegundos, com uma exceção: nos extratos, um lançamento sem regra e sem resposta no cache da IA espera o modelo (até 60 s por lançamento, `TIMEOUT_S` de `ia.py`), e a etapa inteira sai depois disso. Em setembro, os 184 lançamentos saem por regra e nada espera.
+
+Evento `fim` traz `resumo`, o escopo do mês: `comissao_checkout`, `comissao_remessa`, `comissao_total`, `divergencias_brl`, `divergencia_orbe`, `divergencia_ponte`, `devolucao_casa`, `atlas_bruto_sem_faturar`, `atlas_estimativa`, `notas_brl`, `notas`, `notas_por_linha`, `notas_menos_comissao`, `pendencias`, `pendencias_por_dono`, `pendencias_por_tipo`, `lancamentos`, `lancamentos_por_metodo`, `lancamentos_por_conta`, `lojistas`, `divergencias_operacoes`, `decisoes` (`total`, `regra`, `sinalizadas`, `pessoa`), `decisoes_por_etapa`, `competencia`, `competencia_seguinte`, `duracao_s`.
 
 ## Exemplo (três linhas)
 
@@ -35,6 +67,7 @@ Evento `fim` traz `resumo`: objeto com os totais do mês (`comissao_checkout`, `
 
 ## Interfaces Python
 
-- Motor: `src/tarvo/engine.py`, `run_close(month_dir, out_dir="saida", report_dir="relatorio", emit=None) -> dict`. `emit(evento: dict)` é chamado a cada evento, na hora em que acontece; o motor também grava o arquivo.
+- Motor: `src/tarvo/engine.py`, `run_close(month_dir, out_dir="saida", report_dir="relatorio", emit=None) -> dict`. `emit(evento: dict)` é chamado para cada evento quando a etapa dele termina (ver `parcial`); o motor também grava o arquivo.
 - Painel: `src/tarvo/painel.py`, `build_panel(events: list[dict], dest: Path) -> Path`. Lê o modelo `src/tarvo/vitrine/painel.html` e grava `relatorio/painel.html` com os eventos embutidos.
 - Servidor: `python3 -m src.tarvo.servidor dados [--porta 8765] [--vitrine padrao|refinada]`.
+- De qualquer pasta: `python3 <repo>/src/tarvo dados` e `python3 <repo>/src/tarvo/servidor.py dados`; os caminhos são relativos à pasta onde se digita.

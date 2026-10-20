@@ -1,5 +1,5 @@
 {
-  "executado_em": "2026-10-17T21:14:40Z",
+  "executado_em": "2026-10-20T01:24:52Z",
   "pasta": "dados",
   "arquivos": [
     {
@@ -44,6 +44,100 @@
     "notas": 21,
     "pendencias": 15,
     "lancamentos": 184,
+    "competencia": "09/2026",
+    "competencia_seguinte": "10/2026",
+    "comissao_total": 243278.79,
+    "lojistas": {
+      "CHECKOUT": 21,
+      "REMESSA": 14
+    },
+    "notas_por_linha": {
+      "CHECKOUT": 20,
+      "REMESSA": 1
+    },
+    "notas_menos_comissao": 5.5,
+    "divergencias_operacoes": {
+      "CHECKOUT": 92,
+      "REMESSA": 23
+    },
+    "atlas_estimativa": 7876.05,
+    "pendencias_por_dono": {
+      "Financeiro": 12,
+      "Comercial": 2,
+      "Tesouraria": 1
+    },
+    "pendencias_por_tipo": {
+      "DIVERGENCIA_ORBE": 2,
+      "DEVOLUCAO_LOJISTA": 1,
+      "SEM_CONTRATO": 1,
+      "OPERACAO_REPETIDA": 1,
+      "SPREAD_NEGATIVO": 4,
+      "DIVERGENCIA_PONTE": 1,
+      "SALDO_NAO_POSITIVO": 1,
+      "CONFERIR_REPASSE": 1,
+      "CREDITO_NAO_IDENTIFICADO": 1,
+      "REPASSE_DEVOLVIDO": 1,
+      "TRANSFERENCIA_EM_TRANSITO": 1
+    },
+    "decisoes": {
+      "total": 2463,
+      "regra": 2332,
+      "sinalizadas": 116,
+      "pessoa": 15
+    },
+    "decisoes_por_etapa": {
+      "CHECKOUT": {
+        "total": 1996,
+        "regra": 1900,
+        "sinalizadas": 92,
+        "pessoa": 4
+      },
+      "REMESSA": {
+        "total": 257,
+        "regra": 228,
+        "sinalizadas": 23,
+        "pessoa": 6
+      },
+      "NOTAS": {
+        "total": 23,
+        "regra": 20,
+        "sinalizadas": 1,
+        "pessoa": 2
+      },
+      "EXTRATOS": {
+        "total": 187,
+        "regra": 184,
+        "sinalizadas": 0,
+        "pessoa": 3
+      }
+    },
+    "lancamentos_por_metodo": {
+      "REGRA": 184
+    },
+    "lancamentos_por_conta": {
+      "1.1.03.001": 21,
+      "4.2.01": 4,
+      "1.1.09.001": 7,
+      "2.1.04.001": 1,
+      "4.2.02": 1,
+      "2.1.01.001": 45,
+      "2.1.03.003": 1,
+      "4.2.03": 1,
+      "4.2.04": 1,
+      "1.1.09.002": 1,
+      "4.2.06": 1,
+      "2.1.04.002": 1,
+      "2.1.04.003": 1,
+      "2.1.03.004": 1,
+      "2.1.03.001": 1,
+      "2.1.03.002": 1,
+      "2.1.02.001": 85,
+      "1.1.03.002": 1,
+      "1.1.02.001": 6,
+      "4.2.05": 1,
+      "4.3.01": 1,
+      "3.2.01": 1
+    },
     "duracao_s": 0.07
   }
 }

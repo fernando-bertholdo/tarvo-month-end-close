@@ -1,8 +1,17 @@
-"""CLI: python3 -m src.tarvo <month_folder> [--saida saida] [--relatorio relatorio]."""
+"""CLI: python3 -m src.tarvo <month_folder> [--saida saida] [--relatorio relatorio].
+
+From any folder, call the package by path: python3 <repo>/src/tarvo <month_folder>.
+Paths on the command line are relative to the folder where the command is typed.
+"""
 import argparse
 import sys
+from pathlib import Path
 
-from .engine import run_close
+if __package__:
+    from .engine import run_close
+else:  # run by path: put the repository root on the import path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    from src.tarvo.engine import run_close
 
 
 def main() -> int:

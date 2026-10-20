@@ -5,6 +5,8 @@ Usage, from the repository root:
     python3 -m src.tarvo.servidor dados [--porta 8765] [--vitrine padrao|refinada]
                                         [--sem-pausa] [--sem-navegador] [--exemplo]
 
+From any folder: python3 <repo>/src/tarvo/servidor.py <month_folder> [...].
+
 Endpoints:
     GET  /          the page template (vitrine), served as is
     POST /rodar     starts one close run in a background thread (202, or 409 if busy)
@@ -30,6 +32,8 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+if not __package__:  # run by path from any folder: make `src.tarvo` importable
+    sys.path.insert(0, str(REPO_ROOT))
 DEFAULT_VITRINE = REPO_ROOT / "src" / "tarvo" / "vitrine" / "painel.html"
 REFINED_VITRINE = REPO_ROOT / "vitrine-refinada" / "painel.html"
 EXAMPLE_LOG = REPO_ROOT / "src" / "tarvo" / "vitrine" / "exemplo_eventos.jsonl"
