@@ -1,7 +1,10 @@
 """Build estudio/dados/fechamento.json from the engine output and the case files.
 
 Every number the film shows comes from here. Each value carries its source, so the
-Critic can check a frame against a file. Nothing is typed by hand.
+Critic can check a frame against a file. The values are computed from the files; the
+only literals are reading notes for the Director (the counts 87 and 57 in two notes)
+and the row numbers that point a source at a line of `saida/` (rows 2, 4 and 5 of
+pendencias.csv, row 2 of divergencias_taxa.csv). None of them reaches the screen.
 
 Usage (from the repository root, after `python3 -m src.tarvo dados`):
     python3 estudio/scripts/extrair_dados.py
