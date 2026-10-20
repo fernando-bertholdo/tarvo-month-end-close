@@ -172,6 +172,7 @@ class Close:
                            "taxa_aplicada_pct", "valor_taxa", "id_referencia", "data_venda_original"]),
         }
         self.orbe = []
+        self.orbe_blocked = []  # (file, rows, reason): lines that arrived but cannot be processed (F71)
         f01 = find(self.month, "01_")
         if f01:
             self.orbe += self.read_orbe(f01, expected["01"][1])
@@ -179,8 +180,13 @@ class Close:
             self.warn("Arquivo 01 (Orbe) ausente: comissão de checkout, divergências e notas de checkout bloqueadas (F71).")
         f06 = find(self.month, "06_")  # F76: optional late adjustments
         if f06:
+            rows06 = self.read_orbe(f06, expected["01"][1])
+            if rows06 and not self.orbe:  # F71, F76: adjustments only make sense on top of the main report
+                self.warn("Arquivo 06 (ajustes da Orbe) sem o relatório principal (01): ajustes fora do cálculo, pendência (F71, F76).")
+                self.orbe_blocked.append((f06.name, rows06, "ajustes tardios da Orbe sem o relatório principal (01): fora do cálculo até o 01 chegar; rodar o fechamento de novo com os dois (F71, F76). Valor = bruto dos ajustes"))
+                rows06 = []
             ids = {r["id_transacao"] for r in self.orbe}
-            for r in self.read_orbe(f06, expected["01"][1]):
+            for r in rows06:
                 if r["id_transacao"] in ids:
                     self.warn(f"{r['id_transacao']} repetido entre 01 e 06: linha do 06 fora do cálculo, pendência (F76).")
                     r["_dup"] = True
@@ -192,6 +198,8 @@ class Close:
             book = read_xlsx(f02.read_bytes())
             self.files.append({"arquivo": f02.name, "linhas": sum(len(v) for v in book.values())})
             self.ev("arquivo", fonte={"arquivo": f02.name, "ref": ""}, linhas=len(book.get("Taxas vigentes", [])), motivo="planilha de taxas lida")
+            if "Taxas vigentes" not in book:
+                self.warn(f"{f02.name}: layout mudou (sem a aba 'Taxas vigentes'); checkout e divergências de spread bloqueados (F71).")
             for row in book.get("Taxas vigentes", []):
                 if row.get("A") and row.get("B") and row["_row"] not in ("5",) and row.get("A") != "Lojista":
                     k = (row.get("K") or "").strip()
@@ -211,7 +219,7 @@ class Close:
                 if row.get("A"):
                     self.old_cnpj[norm(row["A"])] = cnpj14(row.get("B"))
         else:
-            self.warn("Arquivo 02 (taxas) ausente: comissões e divergências bloqueadas (F71).")
+            self.warn("Arquivo 02 (taxas) ausente: checkout e divergências de spread bloqueados; a comissão de remessa sai do spread realizado (F71).")
         self.ponte = []
         f03 = find(self.month, "03_")
         if f03:
@@ -227,12 +235,12 @@ class Close:
             self.files.append({"arquivo": f04.name, "linhas": len(rows)})
             self.ev("arquivo", fonte={"arquivo": f04.name, "ref": ""}, linhas=len(rows), motivo="plano de contas lido")
         else:
-            self.warn("Arquivo 04 (plano de contas) ausente: classificação dos extratos bloqueada (F71).")
+            self.warn("Arquivo 04 (plano de contas) ausente: a classificação por regra segue; lançamento sem regra vai para uma pessoa (F71).")
         self.f05a, self.f05b = find(self.month, "05a_"), find(self.month, "05b_")
         if not self.f05a:
             self.warn("Arquivo 05a (Aurora) ausente: lançamentos do Aurora bloqueados (F71).")
         if not self.f05b:
-            self.warn("Arquivo 05b (Meridiano) ausente: lançamentos do Meridiano bloqueados (F71).")
+            self.warn("Arquivo 05b (Meridiano) ausente: lançamentos do Meridiano bloqueados e transferências do Aurora sem conferência (F71).")
 
     def read_orbe(self, path, cols):
         txt = path.read_bytes().decode("utf-8-sig", errors="replace")
@@ -312,6 +320,19 @@ class Close:
 
     # ------------------------------------------------------------ checkout
     def checkout(self):
+        blocked = bool(self.orbe) and not self.contracts  # F71: no contracted rate without the sheet
+        if blocked:
+            by_file = OrderedDict()
+            for r in self.orbe:
+                by_file.setdefault(r["_arquivo"], []).append(r)
+            why = "linhas da Orbe sem a planilha de taxas (02): checkout fora do cálculo até a planilha chegar; rodar o fechamento de novo (F71). Valor = bruto transacionado"
+            self.orbe_blocked = [(f, rows, why) for f, rows in by_file.items()] + self.orbe_blocked
+        for arq, rows, why in self.orbe_blocked:
+            vals = [(r["id_transacao"], dec_br(r["valor_bruto"])) for r in rows]
+            self.pend("DEPENDENCIA_AUSENTE", [v[0] for v in vals], sum((v[1] for v in vals), Decimal("0")),
+                      why, "Financeiro", arq, regra="F71", rastro_vals=vals)
+        if blocked:
+            return
         per = OrderedDict()
         casa_lines, atlas_lines, unknown = [], [], defaultdict(list)
         div_by_merchant = defaultdict(list)
@@ -424,18 +445,20 @@ class Close:
                 self.dec("REMESSA", arq, op, "F69", "ajuste", com, f"ajuste de contestação da Ponte ({p['obs']}): abate 50% na nota do mês", peso="atencao")
                 continue
             if p["spread"] < 0:  # F17, F65
+                contrato = (f"diferença até o contrato R$ {contract_spread - p['spread']} (spread contratado R$ {contract_spread})"
+                            if self.contracts else "spread contratado desconhecido sem a planilha de taxas (02)")
                 self.pend("SPREAD_NEGATIVO", [op], p["spread"],
-                          f"spread negativo do relatório R$ {p['spread']}; diferença até o contrato R$ {contract_spread - p['spread']} (spread contratado R$ {contract_spread}); fora da comissão e da nota, contestar com a Ponte (F17, F65)",
+                          f"spread negativo do relatório R$ {p['spread']}; {contrato}; fora da comissão e da nota, contestar com a Ponte (F17, F65)",
                           "Financeiro", arq, frente="REMESSA", regra="F65", rastro_vals=[(op, p["spread"])])
                 continue
             com = r2(p["spread"] * Decimal("0.5"))  # F12, F13
             nome = c["nome"] if c else p["cliente"]
-            if c is None:  # F43
+            if c is None and self.contracts:  # F43; without the sheet there is no register to look at
                 self.pend("SEM_CADASTRO", [op], com, f"CNPJ {p['cnpj']} da Ponte fora da planilha: metade do spread calculada, cadastro a conferir (F43)", "Comercial", arq, frente="REMESSA", regra="F43")
             per.setdefault(p["cnpj"], {"nome": nome, "lines": []})["lines"].append((op, com))
             self.nota_ponte_lines.append((op, com))
             self.dec("REMESSA", arq, op, "F12/F13", "comissao", com, f"50% do spread realizado R$ {p['spread']}", peso="rotina")
-            if p["spread_pct"] - contr > SPREAD_TOL:  # F14, F15, F63
+            if self.contracts and p["spread_pct"] - contr > SPREAD_TOL:  # F14, F15, F63; contract from 02
                 diff = r2(p["spread"] - contract_spread)  # F95: Spread R$ realizado as the base
                 base = r2(p["me"] * p["ptax"])  # F15: the spread applies to Valor ME x PTAX, not to Valor R$
                 did = self.new_id("DIV")
@@ -569,6 +592,8 @@ class Close:
                 self.pend("CREDITO_NAO_IDENTIFICADO", [ln["ref"]], ln["valor"], "Pix recebido sem identificação: identificar o pagador com o banco até o fechamento de outubro (F25, F97)", "Financeiro", ln["arq"], regra="F97", rastro_vals=[(ln["ref"], ln["valor"])])
             if "DEVOLUCAO PIX" in d:
                 self.pend("REPASSE_DEVOLVIDO", [ln["ref"]], ln["valor"], "repasse à Mundo Aberto voltou, motivo desconhecido: confirmar com o lojista e repagar (F26)", "Financeiro", ln["arq"], regra="F26", rastro_vals=[(ln["ref"], ln["valor"])])
+        if not self.f05b:  # F71: without the Meridiano statement a transfer cannot be matched
+            return
         outs = [ln for ln in lines if ln["banco"] == "AURORA" and "TRANSF ENTRE CONTAS" in norm(ln["desc"])]
         ins = [ln for ln in lines if ln["banco"] == "MERIDIANO" and "MESMA TITULARIDADE" in norm(ln["desc"])]
         pool = [i["valor"] for i in ins]
@@ -591,7 +616,8 @@ class Close:
             return
         try:
             from . import ia
-            decisions = ia.classify(unmatched, self.plano)
+            # F71: without the chart there is no account to propose
+            decisions = ia.classify(unmatched, self.plano) if self.plano else [None] * len(unmatched)
         except Exception as exc:  # the close never stops for lack of AI
             decisions = [None] * len(unmatched)
             self.warn(f"etapa de IA indisponível ({type(exc).__name__}); lançamentos sem regra vão para decisão humana")
