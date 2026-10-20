@@ -182,7 +182,8 @@ de regra e nomes de arquivo aparecem aqui, e só aqui, numa seção "Rastro téc
 Role até "Divergências de taxa": a tabela e a faixa de origem cabem juntas na tela. Leia a faixa da
 esquerda para a direita (contrato, o que a Orbe cobrou, a diferença numa venda, o total a cobrar).
 Clique na faixa: a origem abre e anima, e a linha da Rota Global fica selecionada na tabela. Feche a
-gaveta, volte ao topo e clique no filtro "Financeiro 12" das pendências. Volta ao deck. Cerca de 55 s
+gaveta, volte ao topo e clique no filtro "Financeiro 12" das pendências (em projeção o Resumo é uma
+coluna e as pendências vêm depois da faixa: role até elas). Volta ao deck. Cerca de 55 s
 de tela. (Até a r4, o primeiro clique era na linha da tabela, sem rolar; mudou no acabamento r5.)
 
 ### Momentos para o Engenheiro de render capturar
@@ -775,3 +776,25 @@ comunica. Duração-alvo: até 84 s (2.520 quadros).
   não na linha dele (a linha pede 297 px e o elo tem 228); as colunas da faixa passaram a seguir o conteúdo, com o destaque
   mais largo; a 1440 as duas partes do "Dinheiro em jogo" empilham (lado a lado pedem 338 px e a coluna tem 278); em
   projeção, o filtro "Financeiro 12" não está à vista no topo e o fluxo rola até ele.
+
+- **Diretor, 20/10, 00:45 BRT, conferência do acabamento r5 do painel.** Conferidos os quadros que o
+  Animador listou. Fluxo do pitch nos quatro modos: tabela e faixa inteiras na tela antes do clique
+  (`fluxo-1440-1-faixa`, `fluxo-1280-1-faixa`, `fluxo-projecao-1440-1-faixa`,
+  `fluxo-projecao-1280-1-faixa`); o clique na faixa abre a gaveta da Rota Global, seleciona a linha e
+  deixa a faixa à vista (`fluxo-1440-2-gaveta`, `fluxo-1280-2-gaveta`). Faixa: rótulo em cima, os quatro
+  valores na mesma linha, "87 operações" em tinta no tamanho dos valores e o 1.546,28 como maior
+  número, também no escuro (`r5-escuro-faixa`). "Dinheiro em jogo" em coluna a 1440, sem valor
+  descendo para a esquerda (`01-resumo-1440`), e lado a lado em projeção a 1440, com os valores na
+  mesma borda (`17-projecao-1440`). O "·" desce com o nome (`r4-resumo-1440-pendencias`,
+  `r4-resumo-1280-pendencias`). Notas: pausado em 4 notas, o olhar na Fluente e a linha do motor em
+  "Rotina em lote: feito pela regra." (`r3-notas-1x-como-o-critico-a-4-notas-79270ms`); na tira do
+  vídeo, a linha fala da Casa até 77,74 s do relógio e troca no primeiro quadro da varredura
+  (`r5-video-notas`). Hashes do relatório técnico conferidos: modelo, página gerada, vídeo e folha.
+  Aceitas as escolhas do Animador: "A mais nesta venda" e "A cobrar da Orbe" com inicial maiúscula
+  (rótulo em cima, como "Contrato"); "87 operações" logo antes do total a 1280, uma das duas posições
+  da ordem de 23:56; colunas da faixa pelo conteúdo, com o destaque mais largo; as duas partes do
+  "Dinheiro em jogo" empilhadas onde uma não cabe lado a lado; em projeção, o fluxo rola até o filtro
+  "Financeiro 12" (o "Fluxo do pitch" ganhou essa ressalva). **Resíduo registrado, sem nova rodada:** a
+  1280, os três primeiros elos ficam com a altura do quarto, que tem duas linhas de valor, e sobra
+  espaço embaixo do valor. O nome antigo da tela `r3-notas-*-varredura-0-notas-*` fica como está. O
+  painel desta versão é o do acabamento r5.
