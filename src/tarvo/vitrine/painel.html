@@ -1570,7 +1570,8 @@ html[data-projecao] .mesa-motivo { min-height: 64px; }
   function zerarContadores() { contadores = {}; derivados = []; }
 
   // ================================================================ header
-  function tituloTela() { return "Fechamento de " + (L.mes || "mês") + " · Tarvo"; }
+  // the month is the engine's (`competencia`); before the engine says it, the title has no month
+  function tituloTela() { return L.mes ? "Fechamento de " + L.mes + " · Tarvo" : "Fechamento · Tarvo"; }
   function escreverEstado(texto, vivo) {
     var el = $("estado"); limpar(el); el.className = "estado-texto" + (vivo ? " vivo" : "");
     anexar(el, [icone(vivo ? "relogio" : "visto"), texto]);
@@ -2872,6 +2873,7 @@ html[data-projecao] .mesa-motivo { min-height: 64px; }
         classificar(e, ctx, null, null).forEach(function (bt) { aplicar(S, bt); });
       });
       desenharRep(true);
+      if (L.mes && doc.title !== tituloTela()) { $("titulo").textContent = tituloTela(); doc.title = tituloTela(); }
       if (S.etapa !== etapaAntes && S.etapa) anunciar("Etapa " + S.etapa + ": " + ETAPAS[S.etapa]);
     }
     try { es = new EventSource("/eventos"); }
