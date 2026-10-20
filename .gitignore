@@ -19,9 +19,8 @@ venv/
 conducao/
 briefing/
 contexto/
-verificacao/
+verificacao/README.md
 inputs/
-tests/
 entrega/
 KICKOFF_GUIDE.md
 Projeto.md
