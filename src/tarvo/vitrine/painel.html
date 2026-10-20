@@ -287,6 +287,34 @@ html[data-projecao] .dinheiro-grade { grid-template-columns: repeat(auto-fit, mi
 .secao-titulo { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 4px 0 10px; }
 .secao-titulo h2 { font-size: var(--tam-cartao); font-weight: 600; line-height: 1.25; }
 
+/* origin strip under the divergence table (r4): four links read left to right, the last one in focus by
+   size and surface; the connector is drawn in vector (the embedded font has no arrow glyph) */
+.faixa-origem { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.faixa-titulo { font-size: var(--tam-tabela); font-weight: 600; line-height: 1.3; color: var(--cor-tinta); }
+.faixa {
+  appearance: none; width: 100%; margin: 0; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer;
+  display: grid; grid-template-columns: minmax(0, 1fr) 24px minmax(0, 1fr) 24px minmax(0, 1.1fr) 24px minmax(0, 1.4fr);
+  align-items: stretch; gap: 0 4px; border-radius: var(--raio-cartao);
+}
+.elo-caixa {
+  display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 4px; min-width: 0;
+  padding: 12px 14px; border: 1px solid var(--cor-borda); border-radius: var(--raio-cartao); background: var(--cor-superficie);
+  transition: border-color var(--dur-micro), background-color var(--dur-micro);
+}
+.faixa:hover .elo-caixa { border-color: color-mix(in srgb, var(--cor-texto-2) 40%, var(--cor-borda)); }
+.elo-caixa.destaque { background: var(--cor-superficie-2); }
+.elo-rot { font-size: var(--tam-meta); font-weight: 600; line-height: 1.3; color: var(--cor-texto-2); }
+.elo-num { display: inline-flex; align-items: center; gap: 4px; font-size: var(--tam-cartao); font-weight: 700; line-height: 1.15; font-variant-numeric: var(--numeros); white-space: nowrap; }
+.elo-caixa.critico .elo-num { color: var(--cor-critico); }
+.elo-caixa.critico .elo-num .ic { width: 18px; height: 18px; }
+.elo-total { font-size: var(--tam-titulo); font-weight: 700; line-height: 1.1; letter-spacing: -0.01em; font-variant-numeric: var(--numeros); white-space: nowrap; }
+.elo-total .moeda { font-size: .6em; }
+.elo-desc { font-size: var(--tam-tabela); font-weight: 500; line-height: 1.3; color: var(--cor-texto-2); }
+.elo-sub { font-size: var(--tam-meta); font-weight: 600; line-height: 1.3; color: var(--cor-texto-2); }
+.elo-caixa .selo { margin-top: 2px; }
+.elo-conector { display: flex; align-items: center; justify-content: center; color: var(--cor-texto-2); }
+.elo-conector svg { width: 24px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+
 .rotina-lista { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 8px 16px; margin-top: 10px; }
 .rotina-lista .alvo { display: flex; align-items: baseline; gap: 8px; padding: 6px 8px; margin: 0 -8px; }
 .rotina-lista .n { font-size: var(--tam-cartao); font-weight: 700; font-variant-numeric: var(--numeros); }
@@ -1684,8 +1712,8 @@ html[data-projecao] .mesa-motivo { min-height: 64px; }
     return F.gruposOrdem.map(function (k) { return F.grupos[k]; }).sort(function (a, b) { return (grupoValor(b) || 0) - (grupoValor(a) || 0); });
   }
   function tabelaDivergencias(F) {
-    var corpo = h("tbody"), r = F.resumo || {};
-    gruposOrdenados(F).forEach(function (g) {
+    var corpo = h("tbody"), r = F.resumo || {}, grupos = gruposOrdenados(F);
+    grupos.forEach(function (g) {
       var n = grupoN(g);
       var tr = h("tr", { "class": "clicavel", "data-alvo": "grupo:" + g.chave },
         h("td", null, h("button", { "class": "nome-botao", type: "button", onclick: abrirAlvo("grupo", g.chave) }, g.nome)),
@@ -1703,7 +1731,44 @@ html[data-projecao] .mesa-motivo { min-height: 64px; }
         h("table", { "class": "tabela" },
           h("thead", null, h("tr", null, h("th", { scope: "col" }, "Lojista"), h("th", { scope: "col" }, "Contraparte"), h("th", { scope: "col", "class": "valor" }, "Operações"), h("th", { scope: "col", "class": "valor" }, "Valor (R$)"), h("th", { scope: "col" }, "Quem decide"), h("th", { scope: "col" }, h("span", { "class": "sr-only" }, "Origem")))),
           corpo,
-          h("tfoot", null, h("tr", null, h("td", null, "Total"), h("td", null, ""), h("td", { "class": "valor" }, finito(F.divMes) ? inteiro(F.divMes) : ""), h("td", { "class": "valor" }, valorOuVazio(r.divergencias_brl)), h("td", null, ""), h("td", null, ""))))));
+          h("tfoot", null, h("tr", null, h("td", null, "Total"), h("td", null, ""), h("td", { "class": "valor" }, finito(F.divMes) ? inteiro(F.divMes) : ""), h("td", { "class": "valor" }, valorOuVazio(r.divergencias_brl)), h("td", null, ""), h("td", null, ""))))),
+      grupos.length ? faixaOrigem(grupos[0]) : null);
+  }
+
+  // The origin strip under the divergence table (Director, r4, borrowed from the refined version):
+  // the first group of the table, read left to right in four links, with the same sale as its drawer.
+  // No ids, rule codes or file names (they stay in the technical trace) and no arrow glyph: the order
+  // comes from the layout and the connector is drawn in vector. A click opens the group's drawer, as
+  // its table row does. Sources: the rates and `diferenca_pp` of the example divergence and its
+  // `valor`; `parcial.grupo.n`; the pending item's `valor` and owner.
+  function faixaOrigem(g) {
+    var ex = g.divs[0], p = g.pend, remessa = g.frente === "REMESSA";
+    if (!ex || !p) return null;
+    var o = linhaOrigem(L, ex.fonte.arquivo, ex.fonte.ref), n = grupoN(g);
+    var nesta = remessa ? "a mais nesta operação" : (o && o.campos.tipo_lancamento === "ESTORNO" ? "a mais neste estorno" : "a mais nesta venda");
+    var cobrou = remessa ? "A Ponte aplicou" : "A Orbe cobrou", oQue = remessa ? "a contestar com a Ponte" : "a cobrar da Orbe";
+    var ponto = decimal(F24, ex.diferenca_pp) + (Math.abs(ex.diferenca_pp) >= 2 ? " pontos" : " ponto");
+    var nome = String(g.nome || "").replace(/\s+Ltda\.?$/i, "");
+    var operacoes = finito(n) ? plural(n, "operação", "operações") : "";
+    var rotulo = "Origem da " + nome + ": contrato " + pctMotor(ex.taxa_contratada_pct) + "; " + cobrou.toLowerCase() + " " + pctMotor(ex.taxa_aplicada_pct) +
+      "; " + brl(ex.valor) + " " + nesta + ", " + ponto + "; " + operacoes + ", " + brl(p.valor) + " " + oQue + ". Decide: " + p.dono + ". Ver a origem";
+    function elo(cls) { var s = h("span", { "class": "elo-caixa" + (cls ? " " + cls : "") }); for (var i = 1; i < arguments.length; i++) anexar(s, arguments[i]); return s; }
+    var botao = h("button", { "class": "faixa", type: "button", "aria-label": rotulo, "data-linha": "grupo:" + g.chave,
+        onclick: function (ev) { abrirMergulho("grupo", g.chave, ev.currentTarget); } },
+      elo(null, h("span", { "class": "elo-rot" }, "Contrato"), h("span", { "class": "elo-num" }, pctMotor(ex.taxa_contratada_pct))),
+      conector(),
+      elo("critico", h("span", { "class": "elo-rot" }, cobrou), h("span", { "class": "elo-num" }, icone("alerta"), pctMotor(ex.taxa_aplicada_pct))),
+      conector(),
+      elo(null, h("span", { "class": "elo-num" }, h("span", { "class": "inteiro" }, brl(ex.valor))), h("span", { "class": "elo-desc" }, nesta), h("span", { "class": "elo-sub" }, ponto)),
+      conector(),
+      elo("destaque", h("span", { "class": "elo-rot" }, operacoes), dinheiro(p.valor, "elo-total"), h("span", { "class": "elo-desc" }, oQue), seloDono(p.dono)));
+    return h("div", { "class": "faixa-origem" }, h("h3", { "class": "faixa-titulo" }, "Origem · " + nome), botao);
+  }
+  // The connector between two links: a short line with a chevron, drawn in vector (no glyph).
+  function conector() {
+    var s = h("span", { "class": "elo-conector", "aria-hidden": "true" });
+    s.innerHTML = '<svg viewBox="0 0 24 20" focusable="false"><path d="M3 10h16M14 5l5 5-5 5"/></svg>';
+    return s;
   }
 
   function cartaoRotina(F) {
@@ -1795,7 +1860,9 @@ html[data-projecao] .mesa-motivo { min-height: 64px; }
   }
   function marcarSelecionado(gatilho) {
     Array.prototype.forEach.call(doc.querySelectorAll(".selecionada"), function (x) { x.classList.remove("selecionada"); });
-    var linha = gatilho.closest("tr, .pend-item");
+    // the origin strip opens its group's drawer as the table row does: the row is the one selected
+    var par = gatilho.getAttribute("data-linha");
+    var linha = par ? doc.querySelector('tr[data-alvo="' + par + '"]') : gatilho.closest("tr, .pend-item");
     if (linha) linha.classList.add("selecionada");
   }
   function desenharGaveta(abrindo) {
