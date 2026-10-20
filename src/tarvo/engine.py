@@ -29,6 +29,8 @@ SPREAD_TOL = Decimal("0.0005")  # team criterion (F22): 0.05 pp
 ATLAS_EC = "1076801732"  # F7
 CASA_EC = "1018325654"  # F9
 CASA_START, CASA_END = dt.date(2026, 9, 1), dt.date(2026, 12, 31)  # F68, F86
+MESES = ("janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro",
+         "outubro", "novembro", "dezembro")
 EC_ALIASES = {  # F6: EC without registration -> spreadsheet row name
     "1043300981": "Novo Horizonte Intercambio",
     "1043396662": "Horizonte Viagens",
@@ -321,6 +323,10 @@ class Close:
         self.statements = self.statement_lines()  # read with the other files: stage LEITURA
         self.competencia, self.competencia_seguinte = self.month_of_close()
 
+    @staticmethod
+    def month_name(mm_aaaa):
+        return MESES[int(mm_aaaa[:2]) - 1] if mm_aaaa else "o mês do fechamento"
+
     def month_of_close(self):
         """MM/AAAA of the close: the most common month of the Orbe and Ponte dates, and the next one."""
         months = Counter((d.month, d.year) for d in [date_br(r["data_movimento"]) for r in self.orbe] + [p["data"] for p in self.ponte] if d)
@@ -516,7 +522,7 @@ class Close:
             est = sum((l[3] for l in atlas_lines), Decimal("0"))
             self.atlas_estimativa = est
             self.pend("SEM_CONTRATO", [l[0] for l in atlas_lines], tot,
-                      f"Atlas Idiomas (EC {ATLAS_EC}, CNPJ {self.old_cnpj.get(norm('Atlas Idiomas Ltda'), '')}): sem taxa contratada; não faturar até o comercial confirmar, faturar setembro com outubro (F7, F44, F67). Valor = bruto transacionado",
+                      f"Atlas Idiomas (EC {ATLAS_EC}, CNPJ {self.old_cnpj.get(norm('Atlas Idiomas Ltda'), '')}): sem taxa contratada; não faturar até o comercial confirmar, faturar {self.month_name(self.competencia)} com {self.month_name(self.competencia_seguinte)} (F7, F44, F67). Valor = bruto transacionado",
                       "Comercial", atlas_lines[0][2], regra="F67", rastro_vals=[(l[0], l[1]) for l in atlas_lines],
                       por_tipo=dict(Counter(l[4] for l in atlas_lines)),
                       estimativa={"valor": est, "mil": (est / 1000).quantize(Decimal("0.1"), rounding=ROUND_HALF_UP)})

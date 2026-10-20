@@ -30,6 +30,14 @@ class CompetenciaDosArquivos(unittest.TestCase):
         for n in notas:
             self.assertIn("competência 10/2026", n["discriminacao"])
 
+    def test_motivo_da_atlas_usa_os_meses_do_fechamento(self):
+        setembro = por_coluna(*self.rodar().csv("pendencias.csv"))
+        outubro = por_coluna(*self.rodar("/10/2026").csv("pendencias.csv"))
+        atlas = [p["motivo"] for p in setembro if p["tipo"] == "SEM_CONTRATO"]
+        self.assertIn("faturar setembro com outubro", atlas[0])
+        atlas = [p["motivo"] for p in outubro if p["tipo"] == "SEM_CONTRATO"]
+        self.assertIn("faturar outubro com novembro", atlas[0])
+
     def test_virada_do_ano(self):
         r = self.rodar("/12/2026")
         self.assertEqual(r.run["resumo"]["competencia_seguinte"], "01/2027")
