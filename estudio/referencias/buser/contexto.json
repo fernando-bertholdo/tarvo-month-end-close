@@ -1,0 +1,1022 @@
+{
+  "url": "https://mktbarte.github.io/cases/case-buser.html",
+  "gravado_em_utc": "2026-10-18T22:32:45.513Z",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "marcas": [
+    {
+      "rotulo": "goto",
+      "t_ms": 7
+    },
+    {
+      "rotulo": "fluxos-visivel",
+      "t_ms": 7186
+    },
+    {
+      "rotulo": "clique-interruptor",
+      "t_ms": 32688
+    },
+    {
+      "rotulo": "fim",
+      "t_ms": 50818
+    }
+  ],
+  "nota": "O case Buser é servido em barte.com/cases/buser por um iframe que aponta para esta URL.",
+  "caixa_fluxos": {
+    "x": 164,
+    "y": 149,
+    "w": 1112,
+    "h": 585
+  },
+  "caixa_tela_off": {
+    "x": 164,
+    "y": 149,
+    "w": 1112,
+    "h": 521
+  },
+  "caixa_controle": {
+    "x": 164,
+    "y": 79,
+    "w": 1112,
+    "h": 30
+  },
+  "caixa_tela_on": {
+    "x": 164,
+    "y": 149,
+    "w": 1112,
+    "h": 521
+  },
+  "animacoes_declaradas": [
+    {
+      "nome": "khltb",
+      "alvo": "hl-tb [sem agente]",
+      "duracao_ms": 12000,
+      "atraso_ms": 0,
+      "curva": "linear",
+      "quadros_chave": [
+        {
+          "offset": 0,
+          "easing": "linear",
+          "opacity": "0"
+        },
+        {
+          "offset": 0.03,
+          "easing": "linear",
+          "opacity": "1"
+        },
+        {
+          "offset": 0.16,
+          "easing": "linear",
+          "opacity": "1"
+        },
+        {
+          "offset": 0.2,
+          "easing": "linear",
+          "opacity": "0"
+        },
+        {
+          "offset": 1,
+          "easing": "linear",
+          "opacity": "0"
+        }
+      ]
+    },
+    {
+      "nome": "kscan",
+      "alvo": "hl-scan [sem agente]",
+      "duracao_ms": 12000,
+      "atraso_ms": 0,
+      "curva": "linear",
+      "quadros_chave": [
+        {
+          "offset": 0,
+          "easing": "linear",
+          "opacity": "0",
+          "transform": "translateY(0px)"
+        },
+        {
+          "offset": 0.26,
+          "easing": "linear",
+          "opacity": "0",
+          "transform": "translateY(0px)"
+        },
+        {
+          "offset": 0.28,
+          "easing": "linear",
+          "opacity": "1",
+          "transform": "translateY(0px)"
+        },
+        {
+          "offset": 0.32,
+          "easing": "linear",
+          "transform": "translateY(26px)"
+        },
+        {
+          "offset": 0.36,
+          "easing": "linear",
+          "transform": "translateY(52px)"
+        },
+        {
+          "offset": 0.4,
+          "easing": "linear",
+          "transform": "translateY(78px)"
+        },
+        {
+          "offset": 0.44,
+          "easing": "linear",
+          "transform": "translateY(104px)"
+        },
+        {
+          "offset": 0.48,
+          "easing": "linear",
+          "opacity": "1",
+          "transform": "translateY(104px)"
+        },
+        {
+          "offset": 0.52,
+          "easing": "linear",
+          "opacity": "0",
+          "transform": "translateY(0px)"
+        },
+        {
+          "offset": 1,
+          "easing": "linear",
+          "opacity": "0",
+          "transform": "translateY(0px)"
+        }
+      ]
+    },
+    {
+      "nome": "kfoco",
+      "alvo": "foco [sem agente]",
+      "duracao_ms": 12000,
+      "atraso_ms": 0,
+      "curva": "linear",
+      "quadros_chave": [
+        {
+          "offset": 0,
+          "easing": "linear",
+          "opacity": "0"
+        },
+        {
+          "offset": 0.52,
+          "easing": "linear",
+          "opacity": "0"
+        },
+        {
+          "offset": 0.55,
+          "easing": "linear",
+          "opacity": "1"
+        },
+        {
+          "offset": 0.86,
+          "easing": "linear",
+          "opacity": "1"
+        },
+        {
+          "offset": 0.9,
+          "easing": "linear",
+          "opacity": "0"
+        },
+        {
+          "offset": 1,
+          "easing": "linear",
+          "opacity": "0"
+        }
+      ]
+    },
+    {
+      "nome": "kcobre",
+      "alvo": "cobre [sem agente]",
+      "duracao_ms": 12000,
+      "atraso_ms": 0,
+      "curva": "linear",
+      "quadros_chave": [
+        {
+          "offset": 0,
+          "easing": "linear",
+          "transform": "scaleX(1)"
+        },
+        {
+          "offset": 0.58,
+          "easing": "linear",
+          "transform": "scaleX(1)"
+        },
+        {
+          "offset": 0.76,
+          "easing": "linear",
+          "transform": "scaleX(0)"
+        },
+        {
+          "offset": 0.96,
+          "easing": "linear",
+          "transform": "scaleX(0)"
+        },
+        {
+          "offset": 1,
+          "easing": "linear",
+          "transform": "scaleX(1)"
+        }
+      ]
+    },
+    {
+      "nome": "kcaret",
+      "alvo": "caret [sem agente]",
+      "duracao_ms": 12000,
+      "atraso_ms": 0,
+      "curva": "linear",
+      "quadros_chave": [
+        {
+          "offset": 0,
+          "easing": "linear",
+          "opacity": "0"
+        },
+        {
+          "offset": 0.54,
+          "easing": "linear",
+          "opacity": "0"
+        },
+        {
+          "offset": 0.56,
+          "easing": "linear",
+          "opacity": "1"
+        },
+        {
+          "offset": 0.58,
+          "easing": "linear",
+          "opacity": "0"
+        },
+        {
+          "offset": 0.6,
+          "easing": "linear",
+          "opacity": "1"
+        },
+        {
+          "offset": 0.62,
+          "easing": "linear",
+          "opacity": "0"
+        },
+        {
+          "offset": 0.64,
+          "easing": "linear",
+          "opacity": "1"
+        },
+        {
+          "offset": 0.66,
+          "easing": "linear",
+          "opacity": "0"
+        },
+        {
+          "offset": 0.68,
+          "easing": "linear",
+          "opacity": "1"
+        },
+        {
+          "offset": 0.7,
+          "easing": "linear",
+          "opacity": "0"
+        },
+        {
+          "offset": 0.72,
+          "easing": "linear",
+          "opacity": "1"
+        },
+        {
+          "offset": 0.74,
+          "easing": "linear",
+          "opacity": "0"
+        },
+        {
+          "offset": 0.76,
+          "easing": "linear",
+          "opacity": "1"
+        },
+        {
+          "offset": 0.8,
+          "easing": "linear",
+          "opacity": "1"
+        },
+        {
+          "offset": 0.84,
+          "easing": "linear",
+          "opacity": "1"
+        },
+        {
+          "offset": 0.88,
+          "easing": "linear",
+          "opacity": "0"
+        },
+        {
+          "offset": 1,
+          "easing": "linear",
+          "opacity": "0"
+        }
+      ]
+    },
+    {
+      "nome": "kcur",
+      "alvo": "cur [sem agente]",
+      "duracao_ms": 12000,
+      "atraso_ms": 0,
+      "curva": "linear",
+      "quadros_chave": [
+        {
+          "offset": 0,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "opacity": "1",
+          "offsetDistance": "0%"
+        },
+        {
+          "offset": 0.1,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "opacity": "1",
+          "offsetDistance": "0%"
+        },
+        {
+          "offset": 0.28,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "offsetDistance": "38%"
+        },
+        {
+          "offset": 0.46,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "offsetDistance": "58%"
+        },
+        {
+          "offset": 0.54,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "offsetDistance": "100%"
+        },
+        {
+          "offset": 0.88,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "opacity": "1",
+          "offsetDistance": "100%"
+        },
+        {
+          "offset": 0.94,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "opacity": "0",
+          "offsetDistance": "100%"
+        },
+        {
+          "offset": 1,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "opacity": "0",
+          "offsetDistance": "100%"
+        }
+      ]
+    },
+    {
+      "nome": "kbtn",
+      "alvo": "btn-ag [com agente]",
+      "duracao_ms": 8000,
+      "atraso_ms": 0,
+      "curva": "linear",
+      "quadros_chave": [
+        {
+          "offset": 0,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "transform": "none"
+        },
+        {
+          "offset": 0.02,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "transform": "none"
+        },
+        {
+          "offset": 0.04,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "transform": "scale(0.96)"
+        },
+        {
+          "offset": 0.07,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "transform": "none"
+        },
+        {
+          "offset": 1,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "transform": "none"
+        }
+      ]
+    },
+    {
+      "nome": "kcliq",
+      "alvo": "clique [com agente]",
+      "duracao_ms": 8000,
+      "atraso_ms": 0,
+      "curva": "linear",
+      "quadros_chave": [
+        {
+          "offset": 0,
+          "easing": "linear",
+          "opacity": "0",
+          "transform": "scale(1)"
+        },
+        {
+          "offset": 0.03,
+          "easing": "linear",
+          "opacity": "0",
+          "transform": "scale(1)"
+        },
+        {
+          "offset": 0.05,
+          "easing": "linear",
+          "opacity": "0.9"
+        },
+        {
+          "offset": 0.12,
+          "easing": "linear",
+          "opacity": "0",
+          "transform": "scale(1.35)"
+        },
+        {
+          "offset": 1,
+          "easing": "linear",
+          "opacity": "0",
+          "transform": "none"
+        }
+      ]
+    },
+    {
+      "nome": "kstag",
+      "alvo": "st-ag [com agente]",
+      "duracao_ms": 8000,
+      "atraso_ms": 0,
+      "curva": "linear",
+      "quadros_chave": [
+        {
+          "offset": 0,
+          "easing": "linear",
+          "opacity": "0"
+        },
+        {
+          "offset": 0.06,
+          "easing": "linear",
+          "opacity": "0"
+        },
+        {
+          "offset": 0.09,
+          "easing": "linear",
+          "opacity": "1"
+        },
+        {
+          "offset": 0.64,
+          "easing": "linear",
+          "opacity": "1"
+        },
+        {
+          "offset": 0.68,
+          "easing": "linear",
+          "opacity": "0"
+        },
+        {
+          "offset": 1,
+          "easing": "linear",
+          "opacity": "0"
+        }
+      ]
+    },
+    {
+      "nome": "kstag2",
+      "alvo": "st-ag2 [com agente]",
+      "duracao_ms": 8000,
+      "atraso_ms": 0,
+      "curva": "linear",
+      "quadros_chave": [
+        {
+          "offset": 0,
+          "easing": "linear",
+          "opacity": "0"
+        },
+        {
+          "offset": 0.66,
+          "easing": "linear",
+          "opacity": "0"
+        },
+        {
+          "offset": 0.7,
+          "easing": "linear",
+          "opacity": "1"
+        },
+        {
+          "offset": 0.92,
+          "easing": "linear",
+          "opacity": "1"
+        },
+        {
+          "offset": 0.96,
+          "easing": "linear",
+          "opacity": "0"
+        },
+        {
+          "offset": 1,
+          "easing": "linear",
+          "opacity": "0"
+        }
+      ]
+    },
+    {
+      "nome": "kld",
+      "alvo": "ld [com agente]",
+      "duracao_ms": 8000,
+      "atraso_ms": 550,
+      "curva": "linear",
+      "quadros_chave": [
+        {
+          "offset": 0,
+          "easing": "linear",
+          "opacity": "0"
+        },
+        {
+          "offset": 0.02,
+          "easing": "linear",
+          "opacity": "0"
+        },
+        {
+          "offset": 0.05,
+          "easing": "linear",
+          "opacity": "1"
+        },
+        {
+          "offset": 0.13,
+          "easing": "linear",
+          "opacity": "0"
+        },
+        {
+          "offset": 1,
+          "easing": "linear",
+          "opacity": "0"
+        }
+      ]
+    },
+    {
+      "nome": "kldp",
+      "alvo": " [com agente]",
+      "duracao_ms": 700,
+      "atraso_ms": 0,
+      "curva": "linear",
+      "quadros_chave": [
+        {
+          "offset": 0,
+          "easing": "linear",
+          "opacity": "0.25"
+        },
+        {
+          "offset": 1,
+          "easing": "linear",
+          "opacity": "1"
+        }
+      ]
+    },
+    {
+      "nome": "kldp",
+      "alvo": " [com agente]",
+      "duracao_ms": 700,
+      "atraso_ms": 200,
+      "curva": "linear",
+      "quadros_chave": [
+        {
+          "offset": 0,
+          "easing": "linear",
+          "opacity": "0.25"
+        },
+        {
+          "offset": 1,
+          "easing": "linear",
+          "opacity": "1"
+        }
+      ]
+    },
+    {
+      "nome": "kldp",
+      "alvo": " [com agente]",
+      "duracao_ms": 700,
+      "atraso_ms": 400,
+      "curva": "linear",
+      "quadros_chave": [
+        {
+          "offset": 0,
+          "easing": "linear",
+          "opacity": "0.25"
+        },
+        {
+          "offset": 1,
+          "easing": "linear",
+          "opacity": "1"
+        }
+      ]
+    },
+    {
+      "nome": "kchip",
+      "alvo": "chip2 verde [com agente]",
+      "duracao_ms": 8000,
+      "atraso_ms": 1150,
+      "curva": "linear",
+      "quadros_chave": [
+        {
+          "offset": 0,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "opacity": "0",
+          "transform": "translateY(4px)"
+        },
+        {
+          "offset": 0.03,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "opacity": "1",
+          "transform": "none"
+        },
+        {
+          "offset": 0.8,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "opacity": "1",
+          "transform": "none"
+        },
+        {
+          "offset": 0.86,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "opacity": "0",
+          "transform": "translateY(4px)"
+        },
+        {
+          "offset": 1,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "opacity": "0",
+          "transform": "translateY(4px)"
+        }
+      ]
+    },
+    {
+      "nome": "kld",
+      "alvo": "ld [com agente]",
+      "duracao_ms": 8000,
+      "atraso_ms": 1270,
+      "curva": "linear",
+      "quadros_chave": [
+        {
+          "offset": 0,
+          "easing": "linear",
+          "opacity": "0"
+        },
+        {
+          "offset": 0.02,
+          "easing": "linear",
+          "opacity": "0"
+        },
+        {
+          "offset": 0.05,
+          "easing": "linear",
+          "opacity": "1"
+        },
+        {
+          "offset": 0.13,
+          "easing": "linear",
+          "opacity": "0"
+        },
+        {
+          "offset": 1,
+          "easing": "linear",
+          "opacity": "0"
+        }
+      ]
+    },
+    {
+      "nome": "kchip",
+      "alvo": "chip2 verde [com agente]",
+      "duracao_ms": 8000,
+      "atraso_ms": 1869.9999999999998,
+      "curva": "linear",
+      "quadros_chave": [
+        {
+          "offset": 0,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "opacity": "0",
+          "transform": "translateY(4px)"
+        },
+        {
+          "offset": 0.03,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "opacity": "1",
+          "transform": "none"
+        },
+        {
+          "offset": 0.8,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "opacity": "1",
+          "transform": "none"
+        },
+        {
+          "offset": 0.86,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "opacity": "0",
+          "transform": "translateY(4px)"
+        },
+        {
+          "offset": 1,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "opacity": "0",
+          "transform": "translateY(4px)"
+        }
+      ]
+    },
+    {
+      "nome": "kld",
+      "alvo": "ld [com agente]",
+      "duracao_ms": 8000,
+      "atraso_ms": 1990,
+      "curva": "linear",
+      "quadros_chave": [
+        {
+          "offset": 0,
+          "easing": "linear",
+          "opacity": "0"
+        },
+        {
+          "offset": 0.02,
+          "easing": "linear",
+          "opacity": "0"
+        },
+        {
+          "offset": 0.05,
+          "easing": "linear",
+          "opacity": "1"
+        },
+        {
+          "offset": 0.13,
+          "easing": "linear",
+          "opacity": "0"
+        },
+        {
+          "offset": 1,
+          "easing": "linear",
+          "opacity": "0"
+        }
+      ]
+    },
+    {
+      "nome": "kchip",
+      "alvo": "chip2 verde [com agente]",
+      "duracao_ms": 8000,
+      "atraso_ms": 2590,
+      "curva": "linear",
+      "quadros_chave": [
+        {
+          "offset": 0,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "opacity": "0",
+          "transform": "translateY(4px)"
+        },
+        {
+          "offset": 0.03,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "opacity": "1",
+          "transform": "none"
+        },
+        {
+          "offset": 0.8,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "opacity": "1",
+          "transform": "none"
+        },
+        {
+          "offset": 0.86,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "opacity": "0",
+          "transform": "translateY(4px)"
+        },
+        {
+          "offset": 1,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "opacity": "0",
+          "transform": "translateY(4px)"
+        }
+      ]
+    },
+    {
+      "nome": "kld",
+      "alvo": "ld [com agente]",
+      "duracao_ms": 8000,
+      "atraso_ms": 2710,
+      "curva": "linear",
+      "quadros_chave": [
+        {
+          "offset": 0,
+          "easing": "linear",
+          "opacity": "0"
+        },
+        {
+          "offset": 0.02,
+          "easing": "linear",
+          "opacity": "0"
+        },
+        {
+          "offset": 0.05,
+          "easing": "linear",
+          "opacity": "1"
+        },
+        {
+          "offset": 0.13,
+          "easing": "linear",
+          "opacity": "0"
+        },
+        {
+          "offset": 1,
+          "easing": "linear",
+          "opacity": "0"
+        }
+      ]
+    },
+    {
+      "nome": "kchip",
+      "alvo": "chip2 amar [com agente]",
+      "duracao_ms": 8000,
+      "atraso_ms": 3310,
+      "curva": "linear",
+      "quadros_chave": [
+        {
+          "offset": 0,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "opacity": "0",
+          "transform": "translateY(4px)"
+        },
+        {
+          "offset": 0.03,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "opacity": "1",
+          "transform": "none"
+        },
+        {
+          "offset": 0.8,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "opacity": "1",
+          "transform": "none"
+        },
+        {
+          "offset": 0.86,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "opacity": "0",
+          "transform": "translateY(4px)"
+        },
+        {
+          "offset": 1,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "opacity": "0",
+          "transform": "translateY(4px)"
+        }
+      ]
+    },
+    {
+      "nome": "kld",
+      "alvo": "ld [com agente]",
+      "duracao_ms": 8000,
+      "atraso_ms": 3429.9999999999995,
+      "curva": "linear",
+      "quadros_chave": [
+        {
+          "offset": 0,
+          "easing": "linear",
+          "opacity": "0"
+        },
+        {
+          "offset": 0.02,
+          "easing": "linear",
+          "opacity": "0"
+        },
+        {
+          "offset": 0.05,
+          "easing": "linear",
+          "opacity": "1"
+        },
+        {
+          "offset": 0.13,
+          "easing": "linear",
+          "opacity": "0"
+        },
+        {
+          "offset": 1,
+          "easing": "linear",
+          "opacity": "0"
+        }
+      ]
+    },
+    {
+      "nome": "kchip",
+      "alvo": "chip2 verde [com agente]",
+      "duracao_ms": 8000,
+      "atraso_ms": 4029.9999999999995,
+      "curva": "linear",
+      "quadros_chave": [
+        {
+          "offset": 0,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "opacity": "0",
+          "transform": "translateY(4px)"
+        },
+        {
+          "offset": 0.03,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "opacity": "1",
+          "transform": "none"
+        },
+        {
+          "offset": 0.8,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "opacity": "1",
+          "transform": "none"
+        },
+        {
+          "offset": 0.86,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "opacity": "0",
+          "transform": "translateY(4px)"
+        },
+        {
+          "offset": 1,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "opacity": "0",
+          "transform": "translateY(4px)"
+        }
+      ]
+    },
+    {
+      "nome": "kld",
+      "alvo": "ld [com agente]",
+      "duracao_ms": 8000,
+      "atraso_ms": 4149.999999999999,
+      "curva": "linear",
+      "quadros_chave": [
+        {
+          "offset": 0,
+          "easing": "linear",
+          "opacity": "0"
+        },
+        {
+          "offset": 0.02,
+          "easing": "linear",
+          "opacity": "0"
+        },
+        {
+          "offset": 0.05,
+          "easing": "linear",
+          "opacity": "1"
+        },
+        {
+          "offset": 0.13,
+          "easing": "linear",
+          "opacity": "0"
+        },
+        {
+          "offset": 1,
+          "easing": "linear",
+          "opacity": "0"
+        }
+      ]
+    },
+    {
+      "nome": "kchip",
+      "alvo": "chip2 verde [com agente]",
+      "duracao_ms": 8000,
+      "atraso_ms": 4750,
+      "curva": "linear",
+      "quadros_chave": [
+        {
+          "offset": 0,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "opacity": "0",
+          "transform": "translateY(4px)"
+        },
+        {
+          "offset": 0.03,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "opacity": "1",
+          "transform": "none"
+        },
+        {
+          "offset": 0.8,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "opacity": "1",
+          "transform": "none"
+        },
+        {
+          "offset": 0.86,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "opacity": "0",
+          "transform": "translateY(4px)"
+        },
+        {
+          "offset": 1,
+          "easing": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+          "opacity": "0",
+          "transform": "translateY(4px)"
+        }
+      ]
+    }
+  ],
+  "textos": {
+    "off": "TOTALBUS · BILHETES Naiara Souza 148,00 Jorge R. Filho 444,00 Nayara S. Ferreira 148,00 Ana B. Rezende 178,50 M. C. S. 213,70 Bruno Cardoso 132,00 ITAÚ · EXTRATO PIX · Marcos A. Lima 92,00 PIX · Carla Martins 592,00 PIX · Ricardo Almeida 96,00 PIX · Nayara S. F. 148,00 PIX · Pag. Instantâneo 213,70 PIX · J. Rezende F. 444,00 CONCILIAÇÃO · JULHO DATA PAGADOR VALOR CONCILIAÇÃO 01/07 Marcos A. Lima 92,00 sjc · pix 01/07 Nayara S. Ferreira 148,00 02/07 Carla Martins 592,00 02/07 Ricardo Almeida 96,00 03/07 Pag. Instantâneo 213,70 03/07 J. Rezende Filho 444,00 sjc · pix um crédito de cada vez · Ctrl+C · Ctrl+F · Ctrl+V 30 horas por mês 400 linhas conferidas uma a uma, todo fechamento",
+    "on": "CONCILIAÇÃO · JULHO Rodar agente agente rodando · cascata de parâmetros… concluído em segundos · 6 de 6 linhas DATA PAGADOR VALOR CONCILIAÇÃO 01/07 Marcos A. Lima 92,00 conciliado · sjc · pix 01/07 Nayara S. Ferreira 148,00 conciliado · sjc · pix 02/07 Carla Martins 592,00 conciliado · rio · pix 02/07 Ricardo Almeida 96,00 revisar · sugestão pronta 03/07 Pag. Instantâneo 213,70 conciliado · sp · pix 03/07 J. Rezende Filho 444,00 conciliado · sp · pix segundos por rodada 94,8% fecha sozinho · 99,3% de acurácia contra o gabarito"
+  }
+}
