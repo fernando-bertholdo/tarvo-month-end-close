@@ -95,5 +95,13 @@ class AjusteRepetidoSemPlanilha(unittest.TestCase):
         self.assertEqual([p["valor_brl"] for p in do_06], [BRUTO_06])
 
 
+class NotasMenosComissao(unittest.TestCase):
+    def test_sem_nota_nenhuma_e_o_negativo_da_comissao(self):
+        c = engine.Close(Path("."), Path("."), Path("."))
+        c.competencia = c.competencia_seguinte = ""
+        c.comissoes = [["COM-0001", "00000000000191", "Casa do Estudante", "CHECKOUT", "-5.50"]]
+        self.assertEqual(c.summary(time.time())["notas_menos_comissao"], 5.5)
+
+
 if __name__ == "__main__":
     unittest.main()

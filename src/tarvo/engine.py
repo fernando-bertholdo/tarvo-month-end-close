@@ -833,7 +833,8 @@ class Close:
             "comissao_total": sum((Decimal(c[4]) for c in self.comissoes), Decimal("0")),
             "lojistas": {ln: sum(c[3] == ln for c in self.comissoes) for ln in ("CHECKOUT", "REMESSA")},
             "notas_por_linha": {ln: sum(n[3] == ln for n in self.notas) for ln in ("CHECKOUT", "REMESSA")},
-            "notas_menos_comissao": getattr(self, "notas_menos_comissao", Decimal("0")),
+            # what no note carries: merchants at zero or below (F5); also when no note exists
+            "notas_menos_comissao": sum((Decimal(n[4]) for n in self.notas), Decimal("0")) - sum((Decimal(c[4]) for c in self.comissoes), Decimal("0")),
             "divergencias_operacoes": {ln: sum(d[2] == ln for d in self.divergencias) for ln in ("CHECKOUT", "REMESSA")},
             "atlas_estimativa": getattr(self, "atlas_estimativa", Decimal("0")),
             "pendencias_por_dono": dict(self.por_dono),
