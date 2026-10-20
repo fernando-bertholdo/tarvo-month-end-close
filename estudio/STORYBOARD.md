@@ -693,3 +693,18 @@ comunica. Duração-alvo: até 84 s (2.520 quadros).
   "a cobrar da Orbe", "<n> operações"); "{k} de {n} <unidade>"; na gaveta da pendência, o complemento com inicial
   maiúscula ("Nota única de remessa."); ao vivo, antes do motor, o título "Fechamento · Tarvo" (o mês só aparece
   quando o motor diz a competência).
+
+- **Diretor, 19/10, 23:27 BRT, conferência da r4 antes do Crítico.** Vistos o Resumo a 1440 e a 1280
+  (`r4-resumo-*`, `01b-resumo-1440-inteira.png`). Decidido:
+  - *"INTERCÂ": fica como está.* A célula "Cliente" do anexo da Ponte chega com 20 caracteres em todas
+    as linhas; a mesa mostra o arquivo como chegou, e o nome do cadastro já está na linha do motor e na
+    gaveta. O resíduo da conferência de 01:55 era leitura errada do Diretor: não é corte da página.
+  - *Títulos que quebram na lista de pendências (3 a 1440, 10 a 1280, nenhum em projeção): aceito.* O
+    empréstimo é uma pendência por linha da lista, com o motivo na gaveta; o título quebra na própria
+    coluna, sem "…", e valor e selo ficam alinhados. O selo continua "Decide: <área>" (r2, achados 2 e
+    10): encurtar só aqui voltaria a ter dois selos.
+  - *O que ficou de conta na página, aceito:* a animação do contador entre dois valores do motor
+    (movimento do `STYLE.md`, nunca um valor em repouso), a reescrita em pt-BR dos números da nota do
+    motor no Rastro técnico (formato, r2 achado 11) e o zero do estado vazio.
+  Próximo: Crítico r4 em contexto novo, com os números conferidos contra `saida/` e
+  `relatorio/execucao.json` (o `dados/fechamento.json` é da rodada congelada do filme).
