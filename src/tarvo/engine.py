@@ -320,7 +320,11 @@ class Close:
             self.warn("Arquivo 05a (Aurora) ausente: lançamentos do Aurora bloqueados (F71).")
         if not self.f05b:
             self.warn("Arquivo 05b (Meridiano) ausente: lançamentos do Meridiano bloqueados e transferências do Aurora sem conferência (F71).")
-        self.statements = self.statement_lines()  # read with the other files: stage LEITURA
+        try:  # read with the other files (stage LEITURA); a bad line stops the statements only (F71)
+            self.statements = self.statement_lines()
+        except Exception as exc:
+            self.statements = []
+            self.warn(f"bloco extratos interrompido: {type(exc).__name__}: {exc}")
         self.competencia, self.competencia_seguinte = self.month_of_close()
 
     @staticmethod
@@ -328,8 +332,19 @@ class Close:
         return MESES[int(mm_aaaa[:2]) - 1] if mm_aaaa else "o mês do fechamento"
 
     def month_of_close(self):
-        """MM/AAAA of the close: the most common month of the Orbe and Ponte dates, and the next one."""
-        months = Counter((d.month, d.year) for d in [date_br(r["data_movimento"]) for r in self.orbe] + [p["data"] for p in self.ponte] if d)
+        """MM/AAAA of the close and of the next month: the most common month of the Orbe and Ponte dates.
+
+        A date that does not parse is skipped here and left to the block that reads its line.
+        """
+        def month(s):
+            try:
+                d = date_br(s)
+            except ValueError:
+                return None
+            return (d.month, d.year) if d else None
+
+        months = Counter(m for m in [month(r["data_movimento"]) for r in self.orbe] if m)
+        months.update((p["data"].month, p["data"].year) for p in self.ponte)
         if not months:
             return "", ""
         (m, y), _ = months.most_common(1)[0]
@@ -825,9 +840,11 @@ def run_close(month_dir, out_dir="saida", report_dir="relatorio", emit=None) -> 
     c = Close(month_dir, out_dir, report_dir, emit)
     c.buffer = []
     inicio = c.ev("inicio", fonte={"arquivo": str(month_dir), "ref": ""}, motivo="fechamento iniciado")
-    c.load()
-    inicio.update(competencia=c.competencia, competencia_seguinte=c.competencia_seguinte)
-    c.flush("LEITURA")
+    try:
+        c.load()
+        inicio.update(competencia=c.competencia, competencia_seguinte=c.competencia_seguinte)
+    finally:  # what was read reaches the screen even if reading fails
+        c.flush("LEITURA")
     for etapa, block in (("CHECKOUT", c.checkout), ("REMESSA", c.remessa), ("NOTAS", c.notas_fiscais), ("EXTRATOS", c.extratos)):
         c.buffer = []
         try:
