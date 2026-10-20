@@ -61,5 +61,23 @@ class LinhaRuim(unittest.TestCase):
         self.assertIn("01_orbe_relatorio_comissoes_set2026.csv", lidos)
 
 
+class AjusteRepetidoSemPlanilha(unittest.TestCase):
+    """06 repeats a 01 id and the 02 is missing: the repeat still becomes its own pendência (F76)."""
+
+    def test_repeticao_vira_pendencia_e_sai_do_bruto_do_06(self):
+        r = Rodada(sem=("02_",))
+        self.addCleanup(r.fechar)
+        f01, f06 = next(r.mes.glob("01_*")), next(r.mes.glob("06_*"))
+        linha = f01.read_bytes().splitlines(keepends=True)[1]
+        self.assertTrue(linha.startswith(b"TX88410932;"))
+        f06.write_bytes(f06.read_bytes() + linha)
+        r.rodar()
+        pend = por_coluna(*r.csv("pendencias.csv"))
+        rep = [p for p in pend if p["tipo"] == "AJUSTE_REPETIDO"]
+        self.assertEqual([(p["ref_origem"], p["valor_brl"]) for p in rep], [("TX88410932", "608.88")])
+        do_06 = [p for p in pend if p["tipo"] == "DEPENDENCIA_AUSENTE" and p["ref_origem"].startswith("TX88446992")]
+        self.assertEqual([p["valor_brl"] for p in do_06], [BRUTO_06])
+
+
 if __name__ == "__main__":
     unittest.main()

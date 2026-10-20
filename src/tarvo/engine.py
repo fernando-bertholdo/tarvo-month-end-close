@@ -436,7 +436,8 @@ class Close:
         if blocked:
             by_file = OrderedDict()
             for r in self.orbe:
-                by_file.setdefault(r["_arquivo"], []).append(r)
+                if not r.get("_dup"):  # a repeat is its own pendência (F76), out of the file's gross
+                    by_file.setdefault(r["_arquivo"], []).append(r)
             why = "linhas da Orbe sem a planilha de taxas (02): checkout fora do cálculo até a planilha chegar; rodar o fechamento de novo (F71). Valor = bruto transacionado"
             self.orbe_blocked = [(f, rows, why) for f, rows in by_file.items()] + self.orbe_blocked
         for arq, rows, why in self.orbe_blocked:
@@ -444,6 +445,9 @@ class Close:
             self.pend("DEPENDENCIA_AUSENTE", [v[0] for v in vals], sum((v[1] for v in vals), Decimal("0")),
                       why, "Financeiro", arq, regra="F71", rastro_vals=vals)
         if blocked:
+            for r in self.orbe:
+                if r.get("_dup"):
+                    self.repeated(r)
             return
         per = OrderedDict()
         casa_lines, atlas_lines, unknown = [], [], defaultdict(list)
@@ -451,7 +455,7 @@ class Close:
         for r in self.orbe:
             ref, arq = r["id_transacao"], r["_arquivo"]
             if r.get("_dup"):
-                self.pend("AJUSTE_REPETIDO", [ref], dec_br(r["valor_bruto"]), "id_transacao do ajuste repete o relatório principal; critério do time: fora do cálculo até a Helena confirmar (F76)", "Financeiro", arq, regra="F76")
+                self.repeated(r)
                 continue
             ec, tipo = r["cod_estabelecimento"].strip(), r["tipo_lancamento"]
             bruto, taxa_orbe = dec_br(r["valor_bruto"]), dec_br(r["valor_taxa"])
@@ -547,6 +551,10 @@ class Close:
         for ec, lines in unknown.items():
             tot = sum((l[1] for l in lines), Decimal("0"))
             self.pend("SEM_CADASTRO", [l[0] for l in lines], tot, f"EC {ec} ({lines[0][3]}) sem linha vigente na planilha de taxas", "Comercial", lines[0][2], regra="F71", rastro_vals=[(l[0], l[1]) for l in lines])
+
+    def repeated(self, r):
+        """F76: a late adjustment that repeats the main report stays out until Helena confirms."""
+        self.pend("AJUSTE_REPETIDO", [r["id_transacao"]], dec_br(r["valor_bruto"]), "id_transacao do ajuste repete o relatório principal; critério do time: fora do cálculo até a Helena confirmar (F76)", "Financeiro", r["_arquivo"], regra="F76")
 
     # ------------------------------------------------------------ remessa
     def remessa(self):
