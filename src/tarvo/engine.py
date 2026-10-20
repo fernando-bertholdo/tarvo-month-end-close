@@ -848,7 +848,7 @@ def run_close(month_dir, out_dir="saida", report_dir="relatorio", emit=None) -> 
         json.dump(run, fh, ensure_ascii=False, indent=2)
     try:
         from .painel import build_panel
-        build_panel(c.events, c.rep / "painel.html")
+        build_panel(c.events, c.rep / "painel.html", month_dir=c.month, out_dir=c.out)
     except Exception as exc:
         run["avisos"].append(f"painel não gerado: {exc}")
     return run
