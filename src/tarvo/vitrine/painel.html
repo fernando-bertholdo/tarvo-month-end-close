@@ -1234,14 +1234,17 @@ html[data-projecao] .mesa-motivo { min-height: 64px; }
         }
         break;
       case "varre":
-        decisao(S, e); focarEvento(S, e, "ok"); m.modo = "varre"; break;
+        decisao(S, e); focarEvento(S, e, "ok"); m.modo = "varre";
+        if (b.lote) m.motivo = linhaLote(); // the sweep after a line about one row (defect 03, r4)
+        break;
       case "foco":
         // the gaze goes back to the item's file and row before the item is written (finding 1, r3)
         mesaFonte(S, b.fonte); olharEm(S, b.idx, null); break;
       case "lote":
         decisao(S, e);
-        // inside a group of pending items the routine only counts: the group's line stays
-        if (!b.quieto && m.modo !== "lote") { m.modo = "lote"; m.olhar = -1; m.motivo = { tipo: "lote", texto: "Rotina em lote: feito pela regra." }; }
+        // inside a group of pending items the routine only counts: the group's line stays; a batch that
+        // follows a sweep already showing the batch line keeps it (no second entry of the same line)
+        if (!b.quieto && m.modo !== "lote") { m.modo = "lote"; m.olhar = -1; if (!m.motivo || m.motivo.tipo !== "lote") m.motivo = linhaLote(); }
         if (e.frente === "EXTRATOS") mesaFonte(S, infoArquivo(e.fonte.arquivo).fonte);
         break;
       case "div1":
@@ -1341,6 +1344,8 @@ html[data-projecao] .mesa-motivo { min-height: 64px; }
     return { tipo: "critico", selo: "Sinalizada", texto: limparMotivo(e.motivo) };
   }
   var SELO_SINAL = { CONFERIR_REPASSE: "Conferir o repasse" };
+  // What the engine writes while the routine runs in batch (the text of every stage).
+  function linhaLote() { return { tipo: "lote", texto: "Rotina em lote: feito pela regra." }; }
   function narracaoFechando() { return { tipo: "etapa", texto: "Fechando a comissão de cada lojista.", sub: "Só entra no painel o que fechou." }; }
   function narracaoRecap(n) { return { tipo: "etapa", texto: finito(n) ? plural(n, "decisão para uma pessoa.", "decisões para pessoas.") : "Decisões para pessoas.", sub: "Cada uma com motivo, valor e quem decide." }; }
   function palavrasNarracao(n) {
@@ -1365,7 +1370,7 @@ html[data-projecao] .mesa-motivo { min-height: 64px; }
     function narrado(b, n) {
       var f = rnd ? 1 + rnd() * 0.08 : 1; // seeded variation, never shorter than the rule
       b.muda = true; b.palavras = palavrasNarracao(n); b.fator = f; b.req = Math.round((ENTRADA + pausa(b.palavras)) * f);
-      ctx.modo = "narra"; return b;
+      ctx.modo = "narra"; ctx.ultimaLinha = b.k; return b;
     }
     function jit(ms) { return rnd ? Math.round(ms * (1 + rnd() * 0.08)) : ms; }
     if (e.tipo === "inicio") { out.push({ k: "inicio", dur: 400, ev: e }); return out; }
@@ -1418,7 +1423,16 @@ html[data-projecao] .mesa-motivo { min-height: 64px; }
       return out;
     }
     if (e.peso === "rotina") {
-      if (ctx.varridas < SWEEP) { ctx.varridas++; ctx.modo = "varre"; out.push({ k: "varre", dur: 400, ev: e }); return out; }
+      if (ctx.varridas < SWEEP) {
+        ctx.varridas++;
+        var bv = { k: "varre", dur: 400, ev: e };
+        // A sweep right after a line about one row (the notes stage, where the Casa do Estudante comes
+        // first) would leave that line on the desk while the gaze stamps other rows. In the beat the sweep
+        // starts, the line becomes the batch line of the other stages (defect 03, r4). Only the text
+        // changes: the beat keeps its duration and the line's pause still ends before the sweep.
+        if (ctx.modo === "narra" && !ctx.grupoAberto && LINHA_DE_UMA_LINHA[ctx.ultimaLinha]) { bv.muda = true; bv.lote = true; }
+        ctx.modo = "varre"; out.push(bv); return out;
+      }
       var base = orc && orc.base[et] ? orc.base[et] : 0, k = ctx.lote++;
       var bl = { k: "lote", dur: base / (1 + k / 20), ev: e };
       if (ctx.grupoAberto) bl.quieto = true;
