@@ -7,9 +7,11 @@ the command line keep the usual meaning: relative to the folder where the comman
 from __future__ import annotations
 
 import os
+import queue
 import socket
 import subprocess
 import sys
+import threading
 import time
 import unittest
 from pathlib import Path
@@ -65,13 +67,21 @@ class ServidorDeQualquerPasta(unittest.TestCase):
                 [sys.executable, str(PACOTE / "servidor.py"), str(r.mes), "--porta", str(porta),
                  "--sem-navegador"],
                 cwd=r.tmp, env=ambiente(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+            linhas = queue.Queue()  # read in a thread: a server that prints nothing cannot hang the suite
+            leitor = threading.Thread(target=lambda: [linhas.put(l) for l in proc.stdout], daemon=True)
+            leitor.start()
             try:
                 saida, limite = "", time.time() + 20
-                while "[servidor] http" not in saida and time.time() < limite and proc.poll() is None:
-                    saida += proc.stdout.readline()
+                while "[servidor] http" not in saida and time.time() < limite:
+                    try:
+                        saida += linhas.get(timeout=0.2)
+                    except queue.Empty:
+                        if proc.poll() is not None:
+                            break
             finally:
                 proc.terminate()
                 proc.wait(timeout=10)
+                leitor.join(timeout=5)
                 proc.stdout.close()
         finally:
             r.fechar()
