@@ -7,5 +7,5 @@
 
 ## Onde está cada sessão
 
-- `construcao/`: sessões do Claude Code que construíram a solução, exportadas sem edição (só chaves e dados pessoais removidos).
+- `construcao/`: sessões do Claude Code que construíram a solução, exportadas sem edição de conteúdo. Em 20/10, depois da entrega, e-mails, nomes de pessoas de outros times e as instruções pessoais do ambiente foram trocados por marcas (`[e-mail removido]`, `[nome removido]`, `[instruções pessoais removidas]`). A versão avaliada, com o texto original, é a tag `entrega-2026-10-17`.
 - `apoio/`: sessões de apoio, fora do Claude Code.
