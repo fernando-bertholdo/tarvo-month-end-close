@@ -27,7 +27,10 @@ Uma linha JSON por evento, em UTF-8, na ordem em que o motor decide. A página e
 | `etapa` | `LEITURA`, `CHECKOUT`, `REMESSA`, `NOTAS`, `EXTRATOS` | todos, menos `fim` | etapa que emitiu o evento; pendência leva a etapa que a abriu |
 | `escopo` | `lojista` ou `frente` | `total` | `lojista`: comissão de um lojista; `frente`: total da frente fechada. Uma `decisao` é um item; o `fim` é o mês |
 | `parcial` | objeto | ver abaixo | valores corridos, prontos para a tela, por escopo |
-| `n_linhas` | int | `total`, nota, pendência | linhas de origem que o número soma |
+| `n_linhas` | int | `total` lojista, nota, pendência | linhas de origem que o número soma |
+| `n_lojistas` | int | `total` frente do checkout e da remessa | lojistas com comissão na frente |
+| `n_notas`, `notas_por_linha`, `notas_menos_comissao` | int, objeto, número | `total` frente das notas | quantas notas, quantas por linha de negócio, e o que as notas somam além da comissão (lojistas a zero ou abaixo, F5) |
+| `n_lancamentos`, `por_metodo` | int, objeto | `total` frente dos extratos | lançamentos classificados e quantos por `metodo` |
 | `emite_nota` | bool | `total` lojista do checkout | falso quando a comissão é zero ou negativa (F5) |
 | `base` | número | divergência | valor sobre o qual a diferença de taxa incide: bruto da linha (checkout, F11) ou Valor ME × PTAX Ref. (remessa, F15/F95); também `base_brl` em `divergencias_taxa.csv` |
 | `taxa_contratada_pct`, `taxa_aplicada_pct`, `diferenca_pp` | número, em % | divergência; `taxa_contratada_pct` também na comissão do checkout | as duas taxas e a diferença em pontos |
@@ -50,7 +53,7 @@ Cada chave é o escopo em que o valor corre. A página exibe; não soma nem cont
 | `mes` | divergência | `divergencias`: contagem corrida do mês |
 | `mes` | pendência | `pendencias` (contagem corrida), `por_dono` e `em_jogo` (`acima_do_contrato`, `orbe`, `ponte`, `devolver_casa`, `atlas_estimativa`), corridos |
 
-O motor segura os eventos de cada etapa até ela terminar (milissegundos), para que todo evento já saiba o `n`. Ao vivo, os eventos chegam por etapa.
+O motor segura os eventos de cada etapa até ela terminar, para que todo evento já saiba o `n`. Ao vivo, os eventos chegam por etapa. Uma etapa leva milissegundos, com uma exceção: nos extratos, um lançamento sem regra e sem resposta no cache da IA espera o modelo (até 60 s por lançamento, `TIMEOUT_S` de `ia.py`), e a etapa inteira sai depois disso. Em setembro, os 184 lançamentos saem por regra e nada espera.
 
 Evento `fim` traz `resumo`, o escopo do mês: `comissao_checkout`, `comissao_remessa`, `comissao_total`, `divergencias_brl`, `divergencia_orbe`, `divergencia_ponte`, `devolucao_casa`, `atlas_bruto_sem_faturar`, `atlas_estimativa`, `notas_brl`, `notas`, `notas_por_linha`, `notas_menos_comissao`, `pendencias`, `pendencias_por_dono`, `pendencias_por_tipo`, `lancamentos`, `lancamentos_por_metodo`, `lancamentos_por_conta`, `lojistas`, `divergencias_operacoes`, `decisoes` (`total`, `regra`, `sinalizadas`, `pessoa`), `decisoes_por_etapa`, `competencia`, `competencia_seguinte`, `duracao_s`.
 
@@ -64,7 +67,7 @@ Evento `fim` traz `resumo`, o escopo do mês: `comissao_checkout`, `comissao_rem
 
 ## Interfaces Python
 
-- Motor: `src/tarvo/engine.py`, `run_close(month_dir, out_dir="saida", report_dir="relatorio", emit=None) -> dict`. `emit(evento: dict)` é chamado a cada evento, na hora em que acontece; o motor também grava o arquivo.
+- Motor: `src/tarvo/engine.py`, `run_close(month_dir, out_dir="saida", report_dir="relatorio", emit=None) -> dict`. `emit(evento: dict)` é chamado para cada evento quando a etapa dele termina (ver `parcial`); o motor também grava o arquivo.
 - Painel: `src/tarvo/painel.py`, `build_panel(events: list[dict], dest: Path) -> Path`. Lê o modelo `src/tarvo/vitrine/painel.html` e grava `relatorio/painel.html` com os eventos embutidos.
 - Servidor: `python3 -m src.tarvo.servidor dados [--porta 8765] [--vitrine padrao|refinada]`.
 - De qualquer pasta: `python3 <repo>/src/tarvo dados` e `python3 <repo>/src/tarvo/servidor.py dados`; os caminhos são relativos à pasta onde se digita.
