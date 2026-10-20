@@ -241,25 +241,28 @@ html[data-projecao] .dinheiro-grade { grid-template-columns: repeat(auto-fit, mi
 .filtro .num { margin-left: 4px; }
 .pend-lista { margin-top: 4px; }
 #cartao-pendencias, #filtros-pend, #pend-cabeca { scroll-margin-top: calc(var(--topo-h, 56px) + 12px); }
+/* one line per pending item (r4): short title, value, owner seal; the reason is in the drawer. The seal
+   column has the width of the widest seal in the list (measured), so every value ends on the same edge;
+   the title takes what is left of its own row and, if too long, wraps in it, never ends in "…". The seal
+   carries the person icon. */
 .pend-item {
-  position: relative; display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; gap: 2px 12px;
-  padding: 10px 8px; margin: 0 -8px; border-top: 1px solid var(--cor-borda); border-radius: var(--raio-controle);
+  position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto var(--selo-pend, auto); align-items: center; gap: 4px 12px;
+  min-height: var(--linha-tabela); padding: 6px 8px; margin: 0 -8px; border-top: 1px solid var(--cor-borda); border-radius: var(--raio-controle);
   transition: background-color var(--dur-micro);
 }
 .pend-item:first-child { border-top: 0; }
 .pend-item:hover { background: var(--cor-superficie-2); }
 .pend-item.selecionada { background: var(--cor-linha-sel); box-shadow: inset 3px 0 0 var(--cor-acento); }
-.pend-item > .ic { color: var(--cor-alerta); margin-top: 2px; }
 .pend-titulo {
-  appearance: none; border: 0; background: transparent; padding: 0; text-align: left; cursor: pointer;
-  font-size: var(--tam-texto); font-weight: 600; line-height: 1.35; color: var(--cor-tinta);
+  appearance: none; border: 0; background: transparent; padding: 0; text-align: left; cursor: pointer; min-width: 0;
+  font-size: var(--tam-tabela); font-weight: 600; line-height: 1.3; color: var(--cor-tinta);
 }
 .pend-titulo::after { content: ""; position: absolute; inset: 0; border-radius: var(--raio-controle); }
 .pend-titulo:focus-visible { outline: none; }
 .pend-item:has(.pend-titulo:focus-visible) { outline: 2px solid var(--cor-acento); outline-offset: 0; }
-.pend-meta { grid-column: 2; font-size: var(--tam-tabela); color: var(--cor-texto-2); line-height: 1.35; }
-.pend-lado { grid-column: 3; grid-row: 1 / span 2; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
-.pend-valor { font-size: var(--tam-tabela); font-weight: 600; font-variant-numeric: var(--numeros); white-space: nowrap; }
+.pend-titulo .junto { white-space: nowrap; }
+.pend-valor { font-size: var(--tam-tabela); font-weight: 600; font-variant-numeric: var(--numeros); white-space: nowrap; text-align: right; justify-self: end; }
+.pend-item > .selo { justify-self: start; }
 .pend-vazio { padding: 16px 0; color: var(--cor-texto-2); }
 
 .tabela-moldura { border: 1px solid var(--cor-borda); border-radius: var(--raio-tabela); overflow: hidden; background: var(--cor-superficie); }
@@ -1834,13 +1837,29 @@ html[data-projecao] .mesa-motivo { min-height: 64px; }
     }
     lista.forEach(function (p) { ul.appendChild(itemPendencia(p)); });
     if (!lista.length) ul.appendChild(h("li", { "class": "pend-vazio" }, "Nenhuma pendência para esta área."));
+    alinharPendencias();
   }
+  // A title that wraps breaks before the name after "·", never inside it ("Spread negativo · / Ponte Aérea").
+  function tituloEmPartes(t) {
+    var i = String(t).indexOf(" · ");
+    return i < 0 ? t : [t.slice(0, i + 2), " ", h("span", { "class": "junto" }, t.slice(i + 3))];
+  }
+  // The seal column of the pending list has the width of its widest seal (layout, measured).
+  function alinharPendencias() {
+    var ul = $("pend-lista"); if (!ul) return;
+    ul.style.removeProperty("--selo-pend");
+    var w = 0;
+    Array.prototype.forEach.call(ul.querySelectorAll(".pend-item > .selo"), function (s) { w = Math.max(w, s.getBoundingClientRect().width); });
+    if (w) ul.style.setProperty("--selo-pend", Math.ceil(w) + "px");
+  }
+  // One line per pending item (Director, r4, borrowed from the refined version): the short title of the
+  // replay's dictionary, the value and the owner seal. The reason and the complement are in the drawer,
+  // which the line opens.
   function itemPendencia(p) {
     return h("li", { "class": "pend-item", "data-alvo": "pend:" + p.id },
-      icone("pessoa"),
-      h("button", { "class": "pend-titulo", type: "button", onclick: abrirAlvo("pend", p.id) }, p.texto.titulo),
-      h("span", { "class": "pend-meta" }, p.texto.meta),
-      h("span", { "class": "pend-lado" }, h("span", { "class": "pend-valor" }, valorPendenciaTexto(p)), seloDono(p.dono)));
+      h("button", { "class": "pend-titulo", type: "button", onclick: abrirAlvo("pend", p.id) }, tituloEmPartes(p.texto.curto)),
+      h("span", { "class": "pend-valor" }, valorPendenciaTexto(p)),
+      seloDono(p.dono));
   }
 
   // ================================================================ drill-down (state C)
@@ -2115,7 +2134,8 @@ html[data-projecao] .mesa-motivo { min-height: 64px; }
     var origens = itens.map(function (it) { return linhaOrigem(L, it.arquivo, it.ref, /repetid/i.test(e.motivo || "") ? 1 : 0); }).filter(Boolean);
     var est = p.tipo === "SEM_CONTRATO" && e.estimativa && finito(e.estimativa.mil) ? e.estimativa : null;
     var valorEl = p.tipo === "SEM_CONTRATO" ? (est ? milEl(est.mil, "grande") : h("span", { "class": "frase" }, "estimativa indisponível")) : dinheiro(p.valor, "grande");
-    corpo.push(passo(t.rotuloValor, valorEl,
+    // the complement (operations, date, what to check) left the summary's one-line list for here (Director, r4)
+    corpo.push(passo(t.rotuloValor, valorEl, t.meta ? h("p", { "class": "frase apoio" }, maiuscula(t.meta) + ".") : null,
       h("div", { "class": "linha-selos" }, seloDono(p.dono), p.tipo === "SEM_CONTRATO" ? selo("neutro", "estimativa") : null)));
     if (t.porque) corpo.push(passo("Por que", h("p", { "class": "frase" }, t.porque)));
     if (est) {
@@ -2334,6 +2354,7 @@ html[data-projecao] .mesa-motivo { min-height: 64px; }
     if (AO_VIVO) { $("acoes-resumo").hidden = false; }
     escreverEstado(estadoFechado(), false);
     zerarContadores();
+    alinharPendencias();
     window.scrollTo(0, 0);
   }
   function pularParaPessoa() {
@@ -2899,6 +2920,7 @@ html[data-projecao] .mesa-motivo { min-height: 64px; }
     $("b-projecao").setAttribute("aria-pressed", String(on));
     medirTopo();
     cacheColunas = {};
+    alinharPendencias();
     if (!$("v-rep").hidden && S) { vistaChaveMesa = ""; desenharRep(false); }
   }
 
@@ -2928,8 +2950,8 @@ html[data-projecao] .mesa-motivo { min-height: 64px; }
     $("b-rodar").addEventListener("click", rodarAoVivo);
     $("b-projecao").addEventListener("click", alternarProjecao);
     if (root.hasAttribute("data-projecao")) $("b-projecao").setAttribute("aria-pressed", "true");
-    window.addEventListener("resize", function () { medirTopo(); if (!$("v-rep").hidden && S) { vistaChaveMesa = ""; desenharRep(false); } });
-    if (doc.fonts && doc.fonts.ready) doc.fonts.ready.then(function () { cacheColunas = {}; if (!$("v-rep").hidden && S) { vistaChaveMesa = ""; desenharRep(false); } });
+    window.addEventListener("resize", function () { medirTopo(); alinharPendencias(); if (!$("v-rep").hidden && S) { vistaChaveMesa = ""; desenharRep(false); } });
+    if (doc.fonts && doc.fonts.ready) doc.fonts.ready.then(function () { cacheColunas = {}; alinharPendencias(); if (!$("v-rep").hidden && S) { vistaChaveMesa = ""; desenharRep(false); } });
 
     if (AO_VIVO && !EVENTOS.length) { prepararAoVivo(); }
     else {
