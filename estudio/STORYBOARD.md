@@ -179,8 +179,11 @@ de regra e nomes de arquivo aparecem aqui, e só aqui, numa seção "Rastro téc
 
 ### Fluxo do pitch (para ensaiar)
 
-Clique em "Rota Global Intercâmbio" na tabela de divergências: a origem abre e anima. Clique no filtro
-"Financeiro 12" das pendências. Volta ao deck. Cerca de 45 s de tela.
+Role até "Divergências de taxa": a tabela e a faixa de origem cabem juntas na tela. Leia a faixa da
+esquerda para a direita (contrato, o que a Orbe cobrou, a diferença numa venda, o total a cobrar).
+Clique na faixa: a origem abre e anima, e a linha da Rota Global fica selecionada na tabela. Feche a
+gaveta, volte ao topo e clique no filtro "Financeiro 12" das pendências. Volta ao deck. Cerca de 55 s
+de tela. (Até a r4, o primeiro clique era na linha da tabela, sem rolar; mudou no acabamento r5.)
 
 ### Momentos para o Engenheiro de render capturar
 
@@ -708,3 +711,35 @@ comunica. Duração-alvo: até 84 s (2.520 quadros).
     motor no Rastro técnico (formato, r2 achado 11) e o zero do estado vazio.
   Próximo: Crítico r4 em contexto novo, com os números conferidos contra `saida/` e
   `relatorio/execucao.json` (o `dados/fechamento.json` é da rodada congelada do filme).
+
+- **Diretor, 19/10, 23:56 BRT, depois do Crítico r4 (PASSA): acabamento r5.** Findings em
+  `reviews/findings-painel-r4.md`. Como depois do Crítico r2, um acabamento local pela menor correção,
+  conferido pelo Diretor, sem nova rodada de crítica. Nesta ordem:
+  1. *Defeito 01 (faixa abaixo da dobra): só o fluxo do pitch, sem mexer na página.* O Resumo continua
+     abrindo no topo, na resposta. O fluxo passa a rolar até "Divergências de taxa", ler a faixa e
+     clicar nela, em vez de clicar na linha sem rolar (Parte 2, "Fluxo do pitch"). As telas de fluxo da
+     captura seguem o fluxo novo: uma com a faixa inteira antes do clique e uma com a gaveta aberta, a
+     1440, a 1280 e em projeção nos dois tamanhos.
+  2. *Defeito 02 (hierarquia da faixa).* "87 operações" em tinta, no tamanho dos valores dos elos (20 px;
+     25 px em projeção), na linha do "R$ 1.546,28" ou logo antes dele. Nos quatro elos, rótulo sempre em
+     cima e valor sempre embaixo, com os valores numa linha de base comum. Preservar os valores e a fonte
+     de cada um, o 1.546,28 como o maior número da faixa, a superfície 2, o selo, o conector desenhado, a
+     ausência de identificador e o clique que abre a gaveta.
+  3. *Defeito 03 (linha do motor presa na Casa durante a varredura das Notas).* No quadro em que a
+     varredura começa, a linha do motor troca para "Rotina em lote: feito pela regra.", o texto de lote
+     das outras etapas. O tempo não muda; a pausa da Casa continua antes da varredura.
+  4. *Achado 1 (Dinheiro em jogo a 1440).* As duas partes da taxa acima do contrato ("cobrar da Orbe" e
+     "contestar com a Ponte") ficam em coluna, cada uma com rótulo e valor na mesma disposição, sem o
+     valor da Ponte descer para a esquerda.
+  5. *Achado 10 (separador pendurado).* Quando um título da lista quebra, o "·" vai para a linha do nome
+     que vem depois dele, nunca fica no fim da primeira.
+
+  **Sem mudança, registrado:** achado 2 (o 06/10 do crédito da Ponte fica no motivo do motor, no Rastro
+  técnico, como decidido às 22:35); achado 3 (o subtítulo "cada uma com motivo, valor e quem decide"
+  continua verdadeiro: o motivo está na gaveta de cada uma); achados 4 a 9 e 11 a 13, que vêm da r2 e
+  continuam como resíduos de acabamento.
+
+  **Evidência pedida.** Captura inteira numa pasta própria (`--rodada=r5`), feita a partir do
+  `relatorio/painel.html` regenerado com o motor do `refino/painel` sem IA (`TARVO_IA_PORTA=nenhuma`, com
+  `saida/` idêntica), mais a faixa no tema escuro; o vídeo da Reprodução em 1x; folha de contato;
+  relatório em `reviews/tecnico-painel-r5.md`; registro do Animador aqui, em "Mudanças".
