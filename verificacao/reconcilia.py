@@ -186,11 +186,12 @@ def coluna(r: dict) -> str:
 
 def checkout(linhas: list, tabela: list) -> dict:
     """Commission per CNPJ (F1/F30), divergence per line (F11) and the Casa refund (F72)."""
-    com, div, casa, atlas = defaultdict(lambda: ZERO), {}, ZERO, ZERO
+    com, div, casa, atlas, atlas_taxa = defaultdict(lambda: ZERO), {}, ZERO, ZERO, ZERO
     for r in linhas:
         ec, bruto = r["cod_estabelecimento"].strip(), br(r["valor_bruto"])
         if ec == ATLAS_EC:
             atlas += bruto
+            atlas_taxa += br(r["valor_taxa"])  # reference only: what the Orbe deducted
             continue
         if int(r["qtd_parcelas"] or 0) > 12:  # F60
             continue
@@ -213,7 +214,7 @@ def checkout(linhas: list, tabela: list) -> dict:
         contratada, aplicada = (taxa * 100).quantize(CENT), br(r["taxa_aplicada_pct"])
         if aplicada != contratada:
             div[r["id_transacao"]] = r2(bruto * (aplicada - contratada) / 100)
-    return {"comissao": dict(com), "divergencia": div, "casa": casa, "atlas": atlas}
+    return {"comissao": dict(com), "divergencia": div, "casa": casa, "atlas": atlas, "atlas_taxa": atlas_taxa}
 
 
 def remessa(ops: list, tabela: list) -> dict:
@@ -259,6 +260,42 @@ def ler(saida: Path, nome: str) -> list:
 
 def soma(valores) -> Decimal:
     return sum((Decimal(str(v)) for v in valores), ZERO)
+
+
+def parciais(ok: Conferencia, eventos: list, resumo: dict) -> None:
+    """The running values the page shows end where the month summary says (soma dos parciais = total)."""
+    print("Completude: os parciais que a página mostra fecham no total")
+    totais = [e for e in eventos if e["tipo"] == "total"]
+    for frente in ("CHECKOUT", "REMESSA"):
+        lojistas = [e for e in totais if e.get("escopo") == "lojista" and e["frente"] == frente]
+        corrido, fora = ZERO, []
+        for e in lojistas:
+            corrido += Decimal(str(e["valor"]))
+            if Decimal(str(e["parcial"]["frente"]["valor"])) != corrido:
+                fora.append(e["id_saida"])
+        ok.igual(f"{frente}: cada soma corrida é a soma dos lojistas já fechados", [], fora)
+        fim = [Decimal(str(e["valor"])) for e in totais if e.get("escopo") == "frente" and e["frente"] == frente]
+        ok.igual(f"{frente}: soma dos lojistas = total da frente = resumo", [corrido] * 2,
+                 fim + [Decimal(str(resumo["comissao_" + frente.lower()]))])
+    notas = [e for e in eventos if e["tipo"] == "decisao" and e["resultado"] == "nota"]
+    ok.igual("notas: a última soma corrida é o total das notas",
+             Decimal(str(resumo["notas_brl"])), Decimal(str(notas[-1]["parcial"]["frente"]["valor"])) if notas else ZERO)
+    por_etapa = {}
+    for e in eventos:
+        if e["tipo"] == "decisao":
+            p = e["parcial"]["etapa"]
+            por_etapa[e["etapa"]] = {"total": p["k"], "regra": p["regra"], "sinalizadas": p["sinalizadas"],
+                                     "pessoa": p["pessoa"]}
+    ok.igual("contagem da última decisão de cada etapa = resumo por etapa", resumo["decisoes_por_etapa"], por_etapa)
+    pend = [e for e in eventos if e["tipo"] == "decisao" and e["resultado"] == "pendencia"]
+    if pend:
+        jogo = {k: Decimal(str(v)) for k, v in pend[-1]["parcial"]["mes"]["em_jogo"].items()}
+        ok.igual("dinheiro em jogo, no fim = resumo",
+                 {k: Decimal(str(resumo[r])) for k, r in (("orbe", "divergencia_orbe"), ("ponte", "divergencia_ponte"),
+                                                         ("devolver_casa", "devolucao_casa"),
+                                                         ("atlas_estimativa", "atlas_estimativa"))},
+                 {k: jogo[k] for k in ("orbe", "ponte", "devolver_casa", "atlas_estimativa")})
+        ok.igual("pendências por dono, no fim = resumo", resumo["pendencias_por_dono"], pend[-1]["parcial"]["mes"]["por_dono"])
 
 
 def main(argv=None) -> int:
@@ -338,6 +375,12 @@ def main(argv=None) -> int:
              (resumo["notas"], Decimal(str(resumo["notas_brl"]))))
     ok.igual("lançamentos: uma classificação por linha dos dois extratos", lancamentos_dos_extratos(pasta),
              resumo["lancamentos"])
+    if "atlas_estimativa" in resumo:
+        ok.igual("estimativa da Atlas: a taxa que a Orbe descontou", ck["atlas_taxa"],
+                 Decimal(str(resumo["atlas_estimativa"])))
+
+    if "decisoes_por_etapa" in resumo:
+        parciais(ok, eventos, resumo)
 
     print(f"{ok.falhas} falha(s)." if ok.falhas else "Tudo reconcilia.")
     return 1 if ok.falhas else 0

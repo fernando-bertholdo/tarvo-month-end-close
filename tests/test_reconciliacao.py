@@ -49,6 +49,16 @@ class Reconciliacao(unittest.TestCase):
         p = self.reconciliar()
         self.assertEqual(p.returncode, 1, p.stdout)
 
+    def test_parcial_adulterado_falha(self):
+        # the running sum of the last checkout merchant must be the front total
+        path = self.r.relatorio / "eventos.jsonl"
+        texto = path.read_text(encoding="utf-8")
+        alvo = '"frente": {"k": 21, "n": 21, "valor": 203735.34}'
+        self.assertIn(alvo, texto)
+        path.write_text(texto.replace(alvo, alvo.replace("203735.34", "203735.43")), encoding="utf-8")
+        p = self.reconciliar()
+        self.assertEqual(p.returncode, 1, p.stdout)
+
     def test_divergencia_fora_da_fonte_falha(self):
         # same total kept elsewhere is not enough: the line must match the source rates
         self.adulterar("divergencias_taxa.csv", "PC-0926-0011;1.20;1.5007;29.56", "PC-0926-0011;1.20;1.5007;29.57")
