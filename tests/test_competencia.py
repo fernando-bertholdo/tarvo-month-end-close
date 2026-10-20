@@ -44,6 +44,16 @@ class CompetenciaDosArquivos(unittest.TestCase):
         self.assertIn("até o fechamento de novembro", motivos["CREDITO_NAO_IDENTIFICADO"])
         self.assertIn("sem entrada em outubro: conferir no extrato de novembro", motivos["TRANSFERENCIA_EM_TRANSITO"])
 
+    def test_so_os_extratos_dao_o_mes(self):
+        # without the Orbe and the Ponte, the statement dates say the month (review of 19/10)
+        r = Rodada(sem=("01_", "03_", "06_"))
+        self.addCleanup(r.fechar)
+        r.rodar()
+        self.assertEqual(r.run["resumo"]["competencia"], "09/2026")
+        motivos = {p["tipo"]: p["motivo"] for p in por_coluna(*r.csv("pendencias.csv"))}
+        self.assertIn("até o fechamento de outubro", motivos["CREDITO_NAO_IDENTIFICADO"])
+        self.assertIn("sem entrada em setembro: conferir no extrato de outubro", motivos["TRANSFERENCIA_EM_TRANSITO"])
+
     def test_virada_do_ano(self):
         r = self.rodar("/12/2026")
         self.assertEqual(r.run["resumo"]["competencia_seguinte"], "01/2027")

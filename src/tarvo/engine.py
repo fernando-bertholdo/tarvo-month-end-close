@@ -332,8 +332,9 @@ class Close:
         return MESES[int(mm_aaaa[:2]) - 1] if mm_aaaa else "o mês do fechamento"
 
     def month_of_close(self):
-        """MM/AAAA of the close and of the next month: the most common month of the Orbe and Ponte dates.
+        """MM/AAAA of the close and of the next month.
 
+        The most common month of the Orbe and Ponte dates; without them, of the statement dates.
         A date that does not parse is skipped here and left to the block that reads its line.
         """
         def month(s):
@@ -345,6 +346,8 @@ class Close:
 
         months = Counter(m for m in [month(r["data_movimento"]) for r in self.orbe] if m)
         months.update((p["data"].month, p["data"].year) for p in self.ponte)
+        if not months:
+            months.update((ln["data"].month, ln["data"].year) for ln in self.statements)
         if not months:
             return "", ""
         (m, y), _ = months.most_common(1)[0]
