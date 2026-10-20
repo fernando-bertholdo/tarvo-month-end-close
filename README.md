@@ -1,5 +1,7 @@
 # Tarvo: fechamento mensal com rastro
 
+> **Versão avaliada:** tag [`entrega-2026-10-17`](https://github.com/fernando-bertholdo/tarvo-month-end-close/tree/entrega-2026-10-17) (17/10/2026, 18:24 BRT). Tudo o que veio depois é refino pós-desafio, descrito em [POS-ENTREGA.md](POS-ENTREGA.md) e resumido em [Depois da entrega](#depois-da-entrega).
+
 Fecha o mês da Tarvo Pagamentos a partir dos arquivos como eles chegam (Orbe, planilha de taxas, e-mail da Ponte Câmbio, extratos Aurora e Meridiano, plano de contas e o ajuste tardio da Orbe) e entrega comissões, divergências, notas, lançamentos classificados e pendências. Todo número aponta para a linha de origem.
 
 **O número nunca passa pela IA.** Todo valor em reais sai de regra escrita a partir das respostas do financeiro ([REGRAS.md](REGRAS.md)).
@@ -89,6 +91,21 @@ Código em `src/tarvo/`: `engine.py` (motor), `__main__.py` (comando), `servidor
 - Leitura do retorno da contestação no relatório seguinte da Ponte ("AJUSTE REF"), conferindo contra a pendência aberta.
 - Teste da IA numa amostra maior, para calibrar a confiança, e uma tela para a Helena aprovar as decisões humanas.
 
+## Depois da entrega
+
+Refino de 18 e 19/10, por pull request, com a versão avaliada intacta na tag. Datas, motivos e quem achou cada ponto em [POS-ENTREGA.md](POS-ENTREGA.md).
+
+- **Motor ([#1](https://github.com/fernando-bertholdo/tarvo-month-end-close/pull/1)).** Sem o relatório da Orbe, o ajuste tardio não entra mais sozinho (antes, a comissão de checkout saía negativa) e vira pendência. A base de cada divergência vai para o evento e para `divergencias_taxa.csv`. O motor emite os totais parciais, e a tela só exibe. O mês sai dos arquivos, e o comando roda de qualquer pasta. Os valores de setembro não mudaram.
+- **Testes e reconciliação.** `python3 -m unittest discover -s tests -t .` (89 testes) e `python3 verificacao/reconcilia.py`, que recalcula da fonte os totais de cabeça e sai com erro se algum não bate.
+- **Painel ([#2](https://github.com/fernando-bertholdo/tarvo-month-end-close/pull/2)).** Todo número da tela sai de um campo do motor. A origem da divergência da Rota Global fica visível sem clicar, embaixo da tabela, e cada pendência ocupa uma linha, com valor e área que decide.
+- **Estúdio (`estudio/`).** O painel e um filme de 84 s do fechamento, feitos com um crítico em contexto novo a cada rodada. Os vídeos estão na Release [`filme-2026-10-18`](https://github.com/fernando-bertholdo/tarvo-month-end-close/releases/tag/filme-2026-10-18).
+
+![Resumo do painel: comissão, dinheiro em jogo, divergências com a origem da Rota Global embaixo da tabela e as 15 pendências, uma por linha](estudio/telas/painel-resumo.png)
+
+![Origem de um número: a venda da Rota Global, contrato 3,59% contra 4,09% cobrados, e a linha do relatório da Orbe como chegou](estudio/telas/painel-origem-rota-global.png)
+
+![Reprodução do fechamento aos 25 segundos: a mesa de trabalho do checkout e o impacto no painel, só com o que já fechou](estudio/telas/painel-reproducao.png)
+
 ## Uso de IA
 
-Sessões em [PROMPTS/](PROMPTS/) e momentos em [PROMPTS/MOMENTOS.md](PROMPTS/MOMENTOS.md). Usei um template próprio de condução de case (fluxo e regras de trabalho, sem código do case); as regras de como a IA foi dirigida estão em [CLAUDE.md](CLAUDE.md).
+Sessões em [PROMPTS/](PROMPTS/) e momentos em [PROMPTS/MOMENTOS.md](PROMPTS/MOMENTOS.md). As sessões do refino pós-desafio estão listadas em [PROMPTS/pos-desafio/](PROMPTS/pos-desafio/LEIA-ME.md). Usei um template próprio de condução de case (fluxo e regras de trabalho, sem código do case); as regras de como a IA foi dirigida estão em [CLAUDE.md](CLAUDE.md).
